@@ -19,6 +19,14 @@ Component 01 is the physical and embedded edge intelligence layer. It directly i
 ## 2. Directory Structure
 ```text
 c01_edge_sensor_fusion/
+├── data/
+│   ├── raw/
+│   │   └── baseline_compressor_runs.csv
+│   └── processed/
+│       └── sliding_window_features.csv
+├── notebooks/
+│   ├── 01_sensor_eda_and_dsp_validation.ipynb
+│   └── 02_edge_anomaly_detection_training.ipynb
 ├── firmware/
 │   ├── esp32s3_multimodal_acquisition/
 │   │   └── esp32s3_multimodal_acquisition.ino
@@ -27,6 +35,7 @@ c01_edge_sensor_fusion/
 │       └── feature_extractor.cpp
 ├── edge_models/
 │   ├── statistical_detector.h
+│   ├── tinyml_anomaly_model.h
 │   └── anomaly_thresholds.json
 ├── data_logger/
 │   ├── serial_telemetry_recorder.py
@@ -36,6 +45,17 @@ c01_edge_sensor_fusion/
 └── tests/
     └── test_feature_extractor.py
 ```
+
+---
+
+## 3. Edge Machine Learning Pipeline
+Component 01 follows a full-lifecycle TinyML / Edge Machine Learning workflow:
+1. **Telemetry Capture:** Baseline runs from the instrumented testbed are logged via `data_logger/serial_telemetry_recorder.py` into `data/raw/`.
+2. **DSP & Feature Engineering:** `notebooks/01_sensor_eda_and_dsp_validation.ipynb` evaluates sliding window feature extraction algorithms (RMS, Kurtosis, Crest Factor, $\Delta P/\Delta t$).
+3. **Model Training & Validation:** `notebooks/02_edge_anomaly_detection_training.ipynb` trains unsupervised anomaly detection models (1D-CNN Autoencoder, Isolation Forest, and Mahalanobis distance) on normal compressor baseline runs.
+4. **Quantization & Edge Export:** The trained model is quantized to INT8 or exported as C/C++ statistical thresholds into `edge_models/tinyml_anomaly_model.h` and `edge_models/anomaly_thresholds.json`.
+5. **Real-Time On-Device Inference:** Flashed to the ESP32-S3, the firmware evaluates incoming sliding windows against the anomaly threshold, tripping the 5V relay within <50 ms upon detecting severe degradation.
+
 
 ---
 

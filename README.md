@@ -60,13 +60,14 @@ Detailed architectural blueprints and interface contracts can be inspected in [`
 ```text
 AI_Compressor_Predictive_Maintenance_IOT_ML_Research_J26_SE_326/
 ├── .github/                      # GitHub workflows and PR templates
-├── c01_edge_sensor_fusion/       # Member 1: Embedded C++, DSP, TinyML, Serial logger
+├── c01_edge_sensor_fusion/       # Member 1: Embedded C++, DSP, TinyML, Python notebooks, Serial logger
 ├── c02_predictive_maintenance_rul/# Member 2: MetroPT-3 pipelines, XGBoost, LSTM, SHAP
 ├── c03_digital_twin_behavioral/  # Member 3: Time-series sync, clustering, digital twin engine
 ├── c04_rl_maintenance_optimization/# Member 4: Gymnasium simulation env, DQN agent, baselines
-├── shared/                       # Cross-component JSON schema contracts & test data
-└── docs/                         # Milestone deliverables, diagrams, and benchmarks
+├── dashboard/                    # Unified interactive monitoring dashboard (Streamlit / Web)
+└── shared/                       # Cross-component JSON schema contracts & test data
 ```
+
 
 ---
 
