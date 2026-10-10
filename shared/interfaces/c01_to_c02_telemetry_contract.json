@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "C01_to_C02_Telemetry_Contract",
+  "description": "Standardized schema for preprocessed multi-sensor feature packets streamed from C01 Edge to C02 Predictive Layer",
+  "type": "object",
+  "required": [
+    "timestamp",
+    "device_id",
+    "features",
+    "edge_status"
+  ],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp of the sample window"
+    },
+    "device_id": {
+      "type": "string",
+      "example": "ESP32S3-COMPRESSOR-TESTBED-01"
+    },
+    "sample_rate_hz": {
+      "type": "number",
+      "example": 25.0
+    },
+    "features": {
+      "type": "object",
+      "required": [
+        "temperature_celsius",
+        "pressure_psi",
+        "motor_current_rms_a",
+        "vibration_x_rms_ms2",
+        "vibration_kurtosis",
+        "acoustic_energy_mv"
+      ],
+      "properties": {
+        "temperature_celsius": { "type": "number", "minimum": -20.0, "maximum": 120.0 },
+        "pressure_psi": { "type": "number", "minimum": 0.0, "maximum": 150.0 },
+        "delta_pressure_dt": { "type": "number", "description": "Rate of pressure change per second" },
+        "motor_current_rms_a": { "type": "number", "minimum": 0.0, "maximum": 30.0 },
+        "vibration_x_rms_ms2": { "type": "number", "minimum": 0.0 },
+        "vibration_y_rms_ms2": { "type": "number", "minimum": 0.0 },
+        "vibration_z_rms_ms2": { "type": "number", "minimum": 0.0 },
+        "vibration_kurtosis": { "type": "number", "description": "Impulsiveness metric for bearing/piston impact" },
+        "vibration_crest_factor": { "type": "number" },
+        "acoustic_energy_mv": { "type": "number", "minimum": 0.0 }
+      }
+    },
+    "edge_status": {
+      "type": "object",
+      "required": [
+        "anomaly_flag",
+        "relay_latched",
+        "sram_free_kb"
+      ],
+      "properties": {
+        "anomaly_flag": { "type": "boolean" },
+        "anomaly_score": { "type": "number", "minimum": 0.0 },
+        "relay_latched": { "type": "boolean", "description": "True if emergency cut-off triggered" },
+        "sram_free_kb": { "type": "number" }
+      }
+    }
+  }
+}

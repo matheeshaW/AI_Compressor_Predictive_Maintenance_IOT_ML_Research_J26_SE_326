@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "C03_to_C04_Twin_State_Contract",
+  "description": "Standardized schema for Digital Twin synchronized state, operational regime, and behavioral deviation passed to C04 RL Optimization",
+  "type": "object",
+  "required": [
+    "timestamp",
+    "twin_id",
+    "operating_state",
+    "behavioral_intelligence",
+    "degradation_metrics"
+  ],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "twin_id": {
+      "type": "string",
+      "example": "TWIN-COMPRESSOR-RECIP-01"
+    },
+    "operating_state": {
+      "type": "object",
+      "required": [
+        "cluster_id",
+        "state_label",
+        "state_confidence"
+      ],
+      "properties": {
+        "cluster_id": { "type": "integer" },
+        "state_label": {
+          "type": "string",
+          "enum": ["IDLE_UNLOADED", "PRESSURIZING_LOADED", "HOLDING_PRESSURE", "BLOWDOWN_DISCHARGE", "ANOMALOUS_LEAK_REGIME"]
+        },
+        "state_confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "behavioral_intelligence": {
+      "type": "object",
+      "required": [
+        "deviation_index",
+        "persistence_counter",
+        "drift_detected"
+      ],
+      "properties": {
+        "deviation_index": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Normalized Mahalanobis / Euclidean distance from the learned state-specific cluster profile"
+        },
+        "persistence_counter": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of consecutive sampling windows exhibiting persistent deviation"
+        },
+        "drift_detected": { "type": "boolean" }
+      }
+    },
+    "degradation_metrics": {
+      "type": "object",
+      "required": [
+        "composite_degradation_score",
+        "pressure_efficiency_ratio"
+      ],
+      "properties": {
+        "composite_degradation_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "pressure_efficiency_ratio": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "thermal_dissipation_factor": { "type": "number" }
+      }
+    }
+  }
+}

@@ -1,0 +1,54 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C / C++ / Embedded Arduino / PlatformIO
+*.o
+*.obj
+*.elf
+*.bin
+*.hex
+.pio/
+build/
+.esphome/
+ArduinoOutput/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Machine Learning & Large Data Files
+*.h5
+*.tflite
+*.pt
+*.pth
+*.onnx
+*.pkl
+*.joblib
+*.parquet
+*.feather
+data/raw/
+data/*.zip
+data/*.tar.gz
+data/metropt3_raw/
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "C02_to_C03_Prediction_Contract",
+  "description": "Standardized schema for AI fault predictions, RUL estimates, and SHAP explainability from C02 to C03 Digital Twin",
+  "type": "object",
+  "required": [
+    "timestamp",
+    "asset_id",
+    "fault_prediction",
+    "rul_estimation",
+    "explainability"
+  ],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "asset_id": {
+      "type": "string",
+      "example": "COMPRESSOR-UNIT-01"
+    },
+    "fault_prediction": {
+      "type": "object",
+      "required": [
+        "predicted_class",
+        "confidence_score",
+        "probabilities"
+      ],
+      "properties": {
+        "predicted_class": {
+          "type": "string",
+          "enum": ["NORMAL", "AIR_LEAK", "VALVE_FAULT", "BEARING_DEGRADATION", "OVERHEATING"]
+        },
+        "confidence_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "probabilities": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        }
+      }
+    },
+    "rul_estimation": {
+      "type": "object",
+      "required": [
+        "estimated_rul_hours",
+        "confidence_interval_95"
+      ],
+      "properties": {
+        "estimated_rul_hours": { "type": "number", "minimum": 0.0 },
+        "confidence_interval_95": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "health_index": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "1.0 = Pristine, 0.0 = Imminent Failure" }
+      }
+    },
+    "explainability": {
+      "type": "object",
+      "required": [
+        "top_contributing_features"
+      ],
+      "properties": {
+        "top_contributing_features": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["feature_name", "shap_value", "feature_value"],
+            "properties": {
+              "feature_name": { "type": "string" },
+              "shap_value": { "type": "number" },
+              "feature_value": { "type": "number" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
