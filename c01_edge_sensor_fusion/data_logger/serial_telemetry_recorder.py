@@ -141,8 +141,13 @@ def record_telemetry(port: str, baud: int, output_path: str, duration_sec: int, 
                 if simulate:
                     time.sleep(0.04)  # 25 Hz rate
                     base_ms += 40
-                    # Introduce occasional anomalies
-                    state = "HIGH_PRESSURE" if (150 < packet_count < 180) else "NORMAL"
+                    # Introduce multi-stage operational cycles & anomalies
+                    if 120 <= packet_count < 160:
+                        state = "BEARING_VIBRATION"
+                    elif 240 <= packet_count < 280:
+                        state = "HIGH_PRESSURE"
+                    else:
+                        state = "NORMAL"
                     record = generate_simulated_packet(base_ms, state=state)
                     line = ",".join(map(str, record))
                 else:

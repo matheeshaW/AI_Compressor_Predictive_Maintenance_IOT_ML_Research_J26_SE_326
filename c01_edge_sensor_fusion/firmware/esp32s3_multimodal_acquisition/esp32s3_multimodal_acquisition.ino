@@ -16,6 +16,7 @@
 #include <Adafruit_ADS1X15.h>
 
 #include "sensor_config.h"
+#include "feature_extractor.h"
 #include "telemetry_packet.h"
 
 // Peripheral Instances
@@ -23,6 +24,9 @@ OneWire oneWire(PIN_DS18B20);
 DallasTemperature tempSensor(&oneWire);
 Adafruit_MPU6050 mpu;
 Adafruit_ADS1115 ads;
+
+// DSP Feature Extraction Engine
+MultiModalFeatureExtractor featureExtractor;
 
 // Operational Flags
 bool mpu_ready = false;
@@ -175,14 +179,35 @@ void loop() {
             }
             currentFrame.acoustic_mv = (maxV - minV) * 1000.0f;
         }
+        
+        // ---------------------------------------------------------
+        // 3c. Sliding-Window Multi-Modal DSP Feature Computation
+        // ---------------------------------------------------------
+        featureExtractor.pushVibration(currentFrame.accel_x_ms2, currentFrame.accel_y_ms2, currentFrame.accel_z_ms2);
+        featureExtractor.pushPressure(currentFrame.pressure_psi, now);
+        featureExtractor.pushCurrent(currentFrame.motor_current_a);
+        featureExtractor.pushAcoustic(currentFrame.acoustic_mv);
+
+        DSPFeatureVector dsp = featureExtractor.computeFeatures();
+        currentFrame.dsp_ready              = dsp.is_ready;
+        currentFrame.dsp_vib_x_rms          = dsp.vib_x_rms;
+        currentFrame.dsp_vib_composite_rms  = dsp.vib_composite_rms;
+        currentFrame.dsp_vib_kurtosis       = dsp.vib_x_kurtosis;
+        currentFrame.dsp_vib_crest_factor   = dsp.vib_x_crest_factor;
+        currentFrame.dsp_delta_p_dt         = dsp.delta_pressure_dt;
+        currentFrame.dsp_motor_current_rms  = dsp.motor_current_rms;
+        currentFrame.dsp_acoustic_energy_mv = dsp.acoustic_energy_mv;
 
         // ---------------------------------------------------------
-        // 3c. Fail-Safe Interlock Protection (<50 ms Emergency Trip)
+        // 3d. Fail-Safe Interlock Protection & Mechanical Anomaly Alarm
         // ---------------------------------------------------------
         if (currentFrame.pressure_psi >= PRESSURE_SAFETY_LIMIT_PSI) {
             emergencyCutoffLatched = true;
             digitalWrite(PIN_RELAY, HIGH); // De-energize relay to trip motor
             digitalWrite(PIN_BUZZER, HIGH); // Continuous alarm tone
+            currentFrame.anomaly_flag = true;
+        } else if (dsp.is_ready && (dsp.vib_x_kurtosis > 7.5f || dsp.vib_x_crest_factor > 6.0f)) {
+            // Edge DSP mechanical alert: impulsive vibration transient / bearing knock detected
             currentFrame.anomaly_flag = true;
         } else {
             if (!emergencyCutoffLatched) {
@@ -192,7 +217,7 @@ void loop() {
         currentFrame.relay_latched = emergencyCutoffLatched;
 
         // ---------------------------------------------------------
-        // 3d. Stream Structured CSV Telemetry Packet
+        // 3e. Stream Structured CSV Telemetry Packet
         // ---------------------------------------------------------
         String csvLine = currentFrame.toCSV();
         Serial.println(csvLine);
