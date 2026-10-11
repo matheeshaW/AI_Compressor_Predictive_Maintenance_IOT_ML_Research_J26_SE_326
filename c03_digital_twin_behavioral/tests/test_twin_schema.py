@@ -36,8 +36,7 @@ def downstream_contract_schema():
         return json.load(f)
 
 
-@pytest.fixture
-def valid_twin_state():
+def get_valid_twin_state():
     return {
         "metadata": {
             "twin_id": "TWIN-COMPRESSOR-RECIP-01",
@@ -147,6 +146,11 @@ def valid_twin_state():
     }
 
 
+@pytest.fixture
+def valid_twin_state():
+    return get_valid_twin_state()
+
+
 def test_schema_file_exists():
     assert os.path.exists(SCHEMA_PATH), f"Schema file not found at {SCHEMA_PATH}"
 
@@ -187,7 +191,7 @@ if __name__ == "__main__":
         downstream_schema = json.load(f)
 
     # Instantiate valid state
-    dummy = valid_twin_state()
+    dummy = get_valid_twin_state()
 
     # Test 1: File exists
     test_schema_file_exists()
