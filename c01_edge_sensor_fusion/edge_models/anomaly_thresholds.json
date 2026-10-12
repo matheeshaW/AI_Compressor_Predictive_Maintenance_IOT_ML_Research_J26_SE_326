@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "model_name": "MultiModal_Mahalanobis_Edge_Detector",
+  "version": "1.0.0",
+  "author": "Weerakoon W.M.M.B (IT23155152)",
+  "research_group": "J26-SE-326",
+  "target_hardware": "ESP32-S3 DevKitC-1 N16R8 (Xtensa LX7 Dual-Core @ 240 MHz)",
+  "calibration_dataset": "baseline_compressor_runs.csv",
+  "sampling_frequency_hz": 25.0,
+  "features": [
+    "vibration_composite_rms_ms2",
+    "vibration_kurtosis",
+    "vibration_crest_factor",
+    "pressure_psi",
+    "motor_current_rms_a",
+    "acoustic_energy_mv"
+  ],
+  "feature_baseline_statistics": {
+    "vibration_composite_rms_ms2": {
+      "mean": 9.817,
+      "std": 0.095
+    },
+    "vibration_kurtosis": {
+      "mean": 3.196,
+      "std": 3.758
+    },
+    "vibration_crest_factor": {
+      "mean": 2.145,
+      "std": 0.891
+    },
+    "pressure_psi": {
+      "mean": 32.13,
+      "std": 0.378
+    },
+    "motor_current_rms_a": {
+      "mean": 5.069,
+      "std": 0.631
+    },
+    "acoustic_energy_mv": {
+      "mean": 102.607,
+      "std": 35.126
+    }
+  },
+  "thresholds": {
+    "mahalanobis_threshold_dm": 4.31,
+    "mahalanobis_confidence_level": 0.995,
+    "chi_square_degrees_of_freedom": 6,
+    "kurtosis_early_warning": 5.0,
+    "kurtosis_critical_knock": 7.5,
+    "crest_factor_severe_impact": 6.0,
+    "pressure_safety_cutoff_psi": 45.0,
+    "temperature_thermal_trip_celsius": 85.0,
+    "persistence_debounce_frames": 2,
+    "fail_safe_relay_reaction_limit_ms": 50.0
+  }
+}

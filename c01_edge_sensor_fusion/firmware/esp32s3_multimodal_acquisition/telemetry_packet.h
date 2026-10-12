@@ -22,7 +22,9 @@ struct MultiModalTelemetry {
     float accel_y_ms2;
     float accel_z_ms2;
     bool anomaly_flag;
+    float anomaly_score;
     bool relay_latched;
+    const char* fault_cause;
 
     // Sliding-Window DSP Statistical Metrics
     bool dsp_ready;
@@ -38,7 +40,7 @@ struct MultiModalTelemetry {
         timestamp_ms(0), temperature_c(25.0f), pressure_psi(0.0f), pressure_volts(0.33f),
         motor_current_a(0.0f), motor_current_volts(1.65f), acoustic_mv(0.0f),
         accel_x_ms2(9.81f), accel_y_ms2(0.0f), accel_z_ms2(0.0f),
-        anomaly_flag(false), relay_latched(false),
+        anomaly_flag(false), anomaly_score(0.0f), relay_latched(false), fault_cause("NORMAL"),
         dsp_ready(false), dsp_vib_x_rms(0.0f), dsp_vib_composite_rms(0.0f),
         dsp_vib_kurtosis(3.0f), dsp_vib_crest_factor(0.0f), dsp_delta_p_dt(0.0f),
         dsp_motor_current_rms(0.0f), dsp_acoustic_energy_mv(0.0f) {}
@@ -113,7 +115,7 @@ struct MultiModalTelemetry {
                  "\"motor_current_rms_a\":%.3f,\"acoustic_energy_mv\":%.1f,"
                  "\"vibration_x_rms_ms2\":%.2f,\"vibration_y_rms_ms2\":%.2f,\"vibration_z_rms_ms2\":%.2f,"
                  "\"vibration_kurtosis\":%.2f,\"vibration_crest_factor\":%.2f},"
-                 "\"edge_status\":{\"anomaly_flag\":%s,\"relay_latched\":%s,\"sram_free_kb\":%.1f}}",
+                 "\"edge_status\":{\"anomaly_flag\":%s,\"anomaly_score\":%.3f,\"fault_cause\":\"%s\",\"relay_latched\":%s,\"sram_free_kb\":%.1f}}",
                  device_id,
                  (unsigned long)timestamp_ms,
                  temperature_c,
@@ -127,6 +129,8 @@ struct MultiModalTelemetry {
                  dsp_ready ? dsp_vib_kurtosis : 3.0f,
                  dsp_ready ? dsp_vib_crest_factor : 0.0f,
                  anomaly_flag ? "true" : "false",
+                 anomaly_score,
+                 fault_cause ? fault_cause : "NORMAL",
                  relay_latched ? "true" : "false",
                  sram_kb);
         return String(buf);

@@ -17,6 +17,7 @@
 
 #include "sensor_config.h"
 #include "feature_extractor.h"
+#include "statistical_detector.h"
 #include "telemetry_packet.h"
 
 // Peripheral Instances
@@ -25,8 +26,9 @@ DallasTemperature tempSensor(&oneWire);
 Adafruit_MPU6050 mpu;
 Adafruit_ADS1115 ads;
 
-// DSP Feature Extraction Engine
+// DSP Feature Extraction & Edge Anomaly Inference Engines
 MultiModalFeatureExtractor featureExtractor;
+StatisticalAnomalyDetector edgeDetector;
 
 // Operational Flags
 bool mpu_ready = false;
@@ -199,19 +201,22 @@ void loop() {
         currentFrame.dsp_acoustic_energy_mv = dsp.acoustic_energy_mv;
 
         // ---------------------------------------------------------
-        // 3d. Fail-Safe Interlock Protection & Mechanical Anomaly Alarm
+        // 3d. Edge Statistical Anomaly Detection & Fail-Safe Interlock (<50 ms)
         // ---------------------------------------------------------
-        if (currentFrame.pressure_psi >= PRESSURE_SAFETY_LIMIT_PSI) {
+        AnomalyResult det = edgeDetector.evaluate(dsp, currentFrame.pressure_psi, currentFrame.temperature_c);
+        currentFrame.anomaly_flag  = det.is_anomalous;
+        currentFrame.anomaly_score = det.anomaly_score;
+        currentFrame.fault_cause   = det.fault_cause;
+
+        if (det.trip_relay || currentFrame.pressure_psi >= PRESSURE_SAFETY_LIMIT_PSI) {
             emergencyCutoffLatched = true;
-            digitalWrite(PIN_RELAY, HIGH); // De-energize relay to trip motor
-            digitalWrite(PIN_BUZZER, HIGH); // Continuous alarm tone
-            currentFrame.anomaly_flag = true;
-        } else if (dsp.is_ready && (dsp.vib_x_kurtosis > 7.5f || dsp.vib_x_crest_factor > 6.0f)) {
-            // Edge DSP mechanical alert: impulsive vibration transient / bearing knock detected
+            digitalWrite(PIN_RELAY, HIGH); // De-energize active-low relay to trip compressor motor
+            digitalWrite(PIN_BUZZER, HIGH); // Continuous audible alarm tone
             currentFrame.anomaly_flag = true;
         } else {
             if (!emergencyCutoffLatched) {
-                currentFrame.anomaly_flag = false;
+                // Keep buzzer silent under normal or non-critical advisory conditions
+                digitalWrite(PIN_BUZZER, LOW);
             }
         }
         currentFrame.relay_latched = emergencyCutoffLatched;
