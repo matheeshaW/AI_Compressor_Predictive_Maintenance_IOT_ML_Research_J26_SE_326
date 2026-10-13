@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-10-13T14:25:22Z",
+  "hardware_target": "ESP32-S3 (Xtensa LX7 Dual-Core 240 MHz, 512KB SRAM)",
+  "dsp_pipeline": {
+    "iterations": 2000,
+    "window_size": 512,
+    "mean_latency_us": 96.9,
+    "p95_latency_us": 197.01,
+    "p99_latency_us": 273.83,
+    "min_latency_us": 61.07,
+    "max_latency_us": 384.55
+  },
+  "mahalanobis_detector": {
+    "iterations": 20000,
+    "mean_latency_us": 7.122,
+    "p95_latency_us": 10.508,
+    "p99_latency_us": 26.766,
+    "min_latency_us": 5.848,
+    "sub_50ms_margin_factor": 7020.3
+  },
+  "deep_autoencoder": {
+    "iterations": 5000,
+    "mean_latency_us": 52.41,
+    "p95_latency_us": 97.06,
+    "p99_latency_us": 160.53
+  },
+  "memory_footprint": {
+    "statistical_detector_ram_bytes": 52,
+    "statistical_detector_flash_bytes": 1024,
+    "statistical_detector_sram_percent": 0.0099,
+    "neural_net_weights_bytes": 320,
+    "neural_net_arena_bytes": 24576,
+    "neural_net_sram_percent": 4.69,
+    "sram_reduction_percent": 99.79
+  },
+  "bandwidth_reduction": {
+    "raw_stream_bytes_per_sec": 13525.2,
+    "raw_stream_mb_per_hour": 46.44,
+    "edge_dsp_bytes_per_sec": 725,
+    "edge_dsp_mb_per_hour": 2.49,
+    "bandwidth_reduction_percent": 94.64,
+    "target_met": true
+  }
+}
