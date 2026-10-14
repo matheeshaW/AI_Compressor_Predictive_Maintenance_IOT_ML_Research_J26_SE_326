@@ -1,11 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "model_name": "MultiModal_Mahalanobis_Edge_Detector",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "author": "Weerakoon W.M.M.B (IT23155152)",
   "research_group": "J26-SE-326",
   "target_hardware": "ESP32-S3 DevKitC-1 N16R8 (Xtensa LX7 Dual-Core @ 240 MHz)",
-  "calibration_dataset": "baseline_compressor_runs.csv",
+  "calibration_dataset": "sliding_window_features_20k.csv",
+  "training_samples_nominal": 14000,
   "sampling_frequency_hz": 25.0,
   "features": [
     "vibration_composite_rms_ms2",
@@ -17,28 +18,28 @@
   ],
   "feature_baseline_statistics": {
     "vibration_composite_rms_ms2": {
-      "mean": 9.817,
-      "std": 0.095
+      "mean": 9.81,
+      "std": 0.327
     },
     "vibration_kurtosis": {
-      "mean": 3.196,
-      "std": 3.758
+      "mean": 3.018,
+      "std": 0.12
     },
     "vibration_crest_factor": {
-      "mean": 2.145,
-      "std": 0.891
+      "mean": 3.1,
+      "std": 0.1
     },
     "pressure_psi": {
-      "mean": 32.13,
-      "std": 0.378
+      "mean": 29.0,
+      "std": 2.127
     },
     "motor_current_rms_a": {
-      "mean": 5.069,
-      "std": 0.631
+      "mean": 8.52,
+      "std": 0.401
     },
     "acoustic_energy_mv": {
-      "mean": 102.607,
-      "std": 35.126
+      "mean": 102.041,
+      "std": 4.005
     }
   },
   "thresholds": {
