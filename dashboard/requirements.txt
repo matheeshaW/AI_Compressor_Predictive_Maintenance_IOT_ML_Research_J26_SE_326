@@ -1,0 +1,7 @@
+# Industrial AI Compressor Intelligence Platform — Dashboard Requirements
+streamlit>=1.30.0
+plotly>=5.18.0
+pandas>=2.0.0
+numpy>=1.24.0
+pyserial>=3.5
+jsonschema>=4.17.0
