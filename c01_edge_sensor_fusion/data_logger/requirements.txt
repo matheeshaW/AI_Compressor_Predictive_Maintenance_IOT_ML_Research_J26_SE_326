@@ -1,0 +1,4 @@
+pyserial>=3.5
+pandas>=2.0.0
+numpy>=1.24.0
+jsonschema>=4.17.0
