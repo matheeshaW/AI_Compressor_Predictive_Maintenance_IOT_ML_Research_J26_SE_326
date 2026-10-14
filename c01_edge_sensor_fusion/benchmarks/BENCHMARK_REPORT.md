@@ -9,9 +9,9 @@
 
 | Evaluation Metric | Target / Requirement | Empirical Result | Status |
 | :--- | :---: | :---: | :---: |
-| **Statistical Anomaly Inference** | $< 1,000\,\mu\text{s}$ ($<1.0\,\text{ms}$) | **`7.122 µs`** | **EXCEEDED (100x Margin)** |
-| **Fail-Safe Relay Trip Margin** | $< 50\,\text{ms}$ ($50,000\,\mu\text{s}$) | **`7020.3x` faster** | **CRITICAL SAFETY MET** |
-| **DSP Feature Extraction (512 samples)** | $< 5.0\,\text{ms}$ | **`0.10 ms`** | **VERIFIED (<1% CPU)** |
+| **Statistical Anomaly Inference** | $< 1,000\,\mu\text{s}$ ($<1.0\,\text{ms}$) | **`7.28 µs`** | **EXCEEDED (100x Margin)** |
+| **Fail-Safe Relay Trip Margin** | $< 50\,\text{ms}$ ($50,000\,\mu\text{s}$) | **`6868.4x` faster** | **CRITICAL SAFETY MET** |
+| **DSP Feature Extraction (512 samples)** | $< 5.0\,\text{ms}$ | **`0.07 ms`** | **VERIFIED (<1% CPU)** |
 | **Static SRAM Footprint** | $< 1.0\,\text{KB}$ | **`52 bytes`** | **ZERO HEAP FRAGMENTATION** |
 | **Edge vs Cloud Bandwidth Reduction** | $> 85.0\%$ | **`94.64%`** | **TARGET EXCEEDED** |
 
@@ -23,12 +23,12 @@
 +-----------------------------------------------------------------------------------+
 | Model Architecture        | Mean Latency (µs) | 95th Pct (µs) | SRAM Footprint    |
 +---------------------------+-------------------+---------------+-------------------+
-| Mahalanobis O(d) Detector |            7.12 µs |       10.51 µs |            52 bytes    |
-| PyTorch 1D Autoencoder    |           52.41 µs |       97.06 µs |         24576 bytes    |
+| Mahalanobis O(d) Detector |            7.28 µs |        9.69 µs |            52 bytes    |
+| PyTorch 1D Autoencoder    |           45.25 µs |       69.24 µs |         24576 bytes    |
 +-----------------------------------------------------------------------------------+
 ```
 
-* **Speedup Factor:** The linear diagonal Mahalanobis distance metric is **7.4x faster** than the neural autoencoder.
+* **Speedup Factor:** The linear diagonal Mahalanobis distance metric is **6.2x faster** than the neural autoencoder.
 * **SRAM Efficiency:** Requires only **52 bytes** of static memory versus **24.0 KB** for neural runtime arenas, completely eliminating the risk of heap fragmentation during continuous industrial deployment.
 
 ---
