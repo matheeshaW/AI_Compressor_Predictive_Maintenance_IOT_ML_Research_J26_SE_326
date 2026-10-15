@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-15T13:06:15Z",
+  "timestamp": "2026-10-15T13:35:59Z",
   "twin_id": "TWIN-COMP-RECIP-01",
   "operating_state": {
     "cluster_id": 3,
@@ -7,13 +7,13 @@
     "state_confidence": 1.0
   },
   "behavioral_intelligence": {
-    "deviation_index": 4.7315,
+    "deviation_index": 5.2483,
     "persistence_counter": 20,
     "drift_detected": true
   },
   "degradation_metrics": {
-    "composite_degradation_score": 0.4529,
-    "pressure_efficiency_ratio": 0.5998,
-    "thermal_dissipation_factor": 0.871
+    "composite_degradation_score": 0.4519,
+    "pressure_efficiency_ratio": 0.6,
+    "thermal_dissipation_factor": 0.854
   }
 }
