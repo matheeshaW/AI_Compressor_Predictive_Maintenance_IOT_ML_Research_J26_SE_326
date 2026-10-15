@@ -248,14 +248,24 @@ def test_subsystem_health_decomposition_faults(initialized_engine):
     assert bearing["health_score"] <= 0.50
 
 
-def test_transient_noise_rejection_vs_persistent_leak_drift(initialized_engine):
+def test_transient_noise_rejection_vs_persistent_leak_drift(baseline_data):
     """
     Demonstrates the core DSR hypothesis:
     A single-frame transient perturbation does NOT declare drift,
     whereas >= 5 consecutive anomalous frames trigger persistent drift declaration.
     """
-    # 1. Establish nominal loaded baseline
+    engine = IndustrialDigitalTwinEngine(
+        asset_id="COMP-RECIP-DRIFT-TEST",
+        deviation_threshold=3.0,
+        persistence_threshold=5,
+        nominal_compression_rate_psi_s=1.35,
+    )
+    engine.initialize_with_baseline(baseline_data)
+
+    # 1. Establish nominal loaded baseline with deterministic timestamps
+    base_t = 1773000000000
     loaded_packet = {
+        "timestamp_ms": base_t,
         "pressure_psi": 75.0,
         "delta_pressure_dt": 1.4,
         "motor_current_rms_a": 18.2,
@@ -264,20 +274,25 @@ def test_transient_noise_rejection_vs_persistent_leak_drift(initialized_engine):
         "vibration_kurtosis": 3.2,
         "acoustic_energy_mv": 260.0,
     }
-    for _ in range(3):
-        p = initialized_engine.step(loaded_packet)
+    for i in range(3):
+        lp = dict(loaded_packet)
+        lp["timestamp_ms"] = base_t + i * 40
+        p = engine.step(lp)
 
     # 2. Inject single-frame severe transient spike
     spike_packet = dict(loaded_packet)
+    spike_packet["timestamp_ms"] = base_t + 3 * 40
     spike_packet["motor_current_rms_a"] = 28.0
     spike_packet["vibration_x_rms_ms2"] = 8.5
-    spike_payload = initialized_engine.step(spike_packet)
+    spike_payload = engine.step(spike_packet)
 
     assert spike_payload["behavioral_intelligence"]["persistence_counter"] == 1
     assert not spike_payload["behavioral_intelligence"]["drift_detected"]
 
     # 3. Next nominal frame decays persistence counter
-    nominal_payload = initialized_engine.step(loaded_packet)
+    nominal_packet = dict(loaded_packet)
+    nominal_packet["timestamp_ms"] = base_t + 4 * 40
+    nominal_payload = engine.step(nominal_packet)
     assert nominal_payload["behavioral_intelligence"]["persistence_counter"] == 0
     assert not nominal_payload["behavioral_intelligence"]["drift_detected"]
 
@@ -288,8 +303,10 @@ def test_transient_noise_rejection_vs_persistent_leak_drift(initialized_engine):
     degraded_loaded["delta_pressure_dt"] = 1.05
 
     drift_declared = False
-    for i in range(1, 7):
-        deg_payload = initialized_engine.step(dict(degraded_loaded))
+    for i in range(1, 8):
+        deg_step = dict(degraded_loaded)
+        deg_step["timestamp_ms"] = base_t + (4 + i) * 40
+        deg_payload = engine.step(deg_step)
         if deg_payload["behavioral_intelligence"]["drift_detected"]:
             drift_declared = True
             assert deg_payload["behavioral_intelligence"]["persistence_counter"] >= 5
