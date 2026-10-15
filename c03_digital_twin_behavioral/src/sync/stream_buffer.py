@@ -22,6 +22,7 @@ class TelemetryFrame:
     timestamp_ms: int
     timestamp_iso: str = ""
     pressure_psi: float = 0.0
+    delta_pressure_dt: float = 0.0
     temperature_celsius: float = 0.0
     motor_current_rms_a: float = 0.0
     vibration_x_rms_ms2: float = 0.0
@@ -152,27 +153,42 @@ class CircularTelemetryBuffer:
         # Resolve timestamp
         t_ms = data.get("timestamp_ms")
         if t_ms is None:
-            t_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+            with self._lock:
+                now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+                if self._buffer and now_ms <= self._buffer[-1].timestamp_ms:
+                    t_ms = self._buffer[-1].timestamp_ms + 40
+                else:
+                    t_ms = now_ms
 
         t_iso = data.get("timestamp_iso", "")
         features = data.get("features", {})
         edge_status = data.get("edge_status", {})
 
-        # Extract multi-modal parameters with fallbacks
+        # Extract multi-modal parameters with direct canonical and fallback keys
+        def _get_val(key: str, alt_key: str, default: float) -> float:
+            if key in features:
+                return float(features[key])
+            if key in data:
+                return float(data[key])
+            if alt_key in data:
+                return float(data[alt_key])
+            return default
+
         frame = TelemetryFrame(
             timestamp_ms=int(t_ms),
             timestamp_iso=str(t_iso),
-            pressure_psi=float(features.get("pressure_psi", data.get("press_psi", 0.0))),
-            temperature_celsius=float(features.get("temperature_celsius", data.get("temp_c", 0.0))),
-            motor_current_rms_a=float(features.get("motor_current_rms_a", data.get("curr_a", 0.0))),
-            vibration_x_rms_ms2=float(features.get("vibration_x_rms_ms2", data.get("vib_x", 0.0))),
-            vibration_y_rms_ms2=float(features.get("vibration_y_rms_ms2", data.get("vib_y", 0.0))),
-            vibration_z_rms_ms2=float(features.get("vibration_z_rms_ms2", data.get("vib_z", 0.0))),
-            vibration_kurtosis=float(features.get("vibration_kurtosis", data.get("kurtosis", 3.0))),
-            vibration_crest_factor=float(features.get("vibration_crest_factor", data.get("crest_factor", 1.4))),
-            acoustic_energy_mv=float(features.get("acoustic_energy_mv", data.get("sound_mv", 0.0))),
-            anomaly_flag=bool(edge_status.get("anomaly_flag", data.get("anomaly", False))),
-            relay_latched=bool(edge_status.get("relay_latched", data.get("relay", False))),
+            pressure_psi=_get_val("pressure_psi", "press_psi", 0.0),
+            delta_pressure_dt=_get_val("delta_pressure_dt", "dp_dt", 0.0),
+            temperature_celsius=_get_val("temperature_celsius", "temp_c", 0.0),
+            motor_current_rms_a=_get_val("motor_current_rms_a", "curr_a", 0.0),
+            vibration_x_rms_ms2=_get_val("vibration_x_rms_ms2", "vib_x", 0.0),
+            vibration_y_rms_ms2=_get_val("vibration_y_rms_ms2", "vib_y", 0.0),
+            vibration_z_rms_ms2=_get_val("vibration_z_rms_ms2", "vib_z", 0.0),
+            vibration_kurtosis=_get_val("vibration_kurtosis", "kurtosis", 3.0),
+            vibration_crest_factor=_get_val("vibration_crest_factor", "crest_factor", 1.4),
+            acoustic_energy_mv=_get_val("acoustic_energy_mv", "sound_mv", 0.0),
+            anomaly_flag=bool(edge_status.get("anomaly_flag", data.get("anomaly_flag", data.get("anomaly", False)))),
+            relay_latched=bool(edge_status.get("relay_latched", data.get("relay_latched", data.get("relay", False)))),
             raw_payload=data,
         )
         return self.push(frame)
@@ -227,10 +243,10 @@ class CircularTelemetryBuffer:
         with self._lock:
             if not self._buffer:
                 return pd.DataFrame(columns=[
-                    "timestamp_ms", "timestamp_iso", "pressure_psi", "temperature_celsius",
-                    "motor_current_rms_a", "vibration_x_rms_ms2", "vibration_y_rms_ms2",
-                    "vibration_z_rms_ms2", "vibration_kurtosis", "vibration_crest_factor",
-                    "acoustic_energy_mv", "anomaly_flag", "relay_latched"
+                    "timestamp_ms", "timestamp_iso", "pressure_psi", "delta_pressure_dt",
+                    "temperature_celsius", "motor_current_rms_a", "vibration_x_rms_ms2",
+                    "vibration_y_rms_ms2", "vibration_z_rms_ms2", "vibration_kurtosis",
+                    "vibration_crest_factor", "acoustic_energy_mv", "anomaly_flag", "relay_latched"
                 ])
 
             data = [
@@ -238,6 +254,7 @@ class CircularTelemetryBuffer:
                     "timestamp_ms": f.timestamp_ms,
                     "timestamp_iso": f.timestamp_iso,
                     "pressure_psi": f.pressure_psi,
+                    "delta_pressure_dt": f.delta_pressure_dt,
                     "temperature_celsius": f.temperature_celsius,
                     "motor_current_rms_a": f.motor_current_rms_a,
                     "vibration_x_rms_ms2": f.vibration_x_rms_ms2,
