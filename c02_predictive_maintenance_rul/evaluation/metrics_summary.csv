@@ -1,0 +1,2 @@
+model_name,timestamp,accuracy,precision,recall,f1_score,roc_auc,rul_mae_hours,rul_rmse_hours
+XGBoost_Baseline,2026-10-15T10:59:56.447171,1.0,1.0,1.0,1.0,1.0,48.94746441304133,56.828606175763895
