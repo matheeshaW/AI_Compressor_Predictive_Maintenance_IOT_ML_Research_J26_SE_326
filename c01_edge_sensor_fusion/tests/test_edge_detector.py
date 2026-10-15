@@ -109,13 +109,13 @@ class TestEdgeAnomalyDetector(unittest.TestCase):
         """Under nominal steady state, the detector outputs NORMAL and trips nothing."""
         nominal_x = {
             "vibration_composite_rms_ms2": 9.81,
-            "vibration_kurtosis": 3.0,
-            "vibration_crest_factor": 1.6,
-            "pressure_psi": 32.1,
-            "motor_current_rms_a": 4.8,
-            "acoustic_energy_mv": 85.0
+            "vibration_kurtosis": 3.018,
+            "vibration_crest_factor": 3.1,
+            "pressure_psi": 29.0,
+            "motor_current_rms_a": 8.52,
+            "acoustic_energy_mv": 102.0
         }
-        res = self.detector.evaluate(nominal_x, current_pressure=32.1, current_temp=28.5)
+        res = self.detector.evaluate(nominal_x, current_pressure=29.0, current_temp=28.5)
         self.assertFalse(res["is_anomalous"])
         self.assertFalse(res["trip_relay"])
         self.assertLess(res["anomaly_score"], 0.5)
@@ -126,10 +126,10 @@ class TestEdgeAnomalyDetector(unittest.TestCase):
         x = {
             "vibration_composite_rms_ms2": 9.81,
             "vibration_kurtosis": 3.0,
-            "vibration_crest_factor": 1.5,
+            "vibration_crest_factor": 3.1,
             "pressure_psi": 46.2,
-            "motor_current_rms_a": 7.5,
-            "acoustic_energy_mv": 90.0
+            "motor_current_rms_a": 8.8,
+            "acoustic_energy_mv": 104.0
         }
         res = self.detector.evaluate(x, current_pressure=46.2, current_temp=30.0)
         self.assertTrue(res["is_anomalous"])
@@ -143,14 +143,14 @@ class TestEdgeAnomalyDetector(unittest.TestCase):
             "vibration_composite_rms_ms2": 13.5,
             "vibration_kurtosis": 8.8,
             "vibration_crest_factor": 6.8,
-            "pressure_psi": 31.8,
-            "motor_current_rms_a": 5.2,
+            "pressure_psi": 29.5,
+            "motor_current_rms_a": 8.6,
             "acoustic_energy_mv": 240.0
         }
         # Debounce frame 1
-        res1 = self.detector.evaluate(knock_x, current_pressure=31.8, current_temp=31.0)
+        res1 = self.detector.evaluate(knock_x, current_pressure=29.5, current_temp=31.0)
         # Debounce frame 2
-        res2 = self.detector.evaluate(knock_x, current_pressure=31.8, current_temp=31.0)
+        res2 = self.detector.evaluate(knock_x, current_pressure=29.5, current_temp=31.0)
 
         self.assertTrue(res2["is_anomalous"])
         self.assertEqual(res2["fault_cause"], "BEARING_VALVE_KNOCK")
@@ -160,13 +160,13 @@ class TestEdgeAnomalyDetector(unittest.TestCase):
         """Temperature exceeding 85.0 deg C triggers emergency thermal trip."""
         x = {
             "vibration_composite_rms_ms2": 9.81,
-            "vibration_kurtosis": 3.0,
-            "vibration_crest_factor": 1.5,
-            "pressure_psi": 32.0,
-            "motor_current_rms_a": 4.8,
-            "acoustic_energy_mv": 85.0
+            "vibration_kurtosis": 3.018,
+            "vibration_crest_factor": 3.1,
+            "pressure_psi": 29.0,
+            "motor_current_rms_a": 8.52,
+            "acoustic_energy_mv": 102.0
         }
-        res = self.detector.evaluate(x, current_pressure=32.0, current_temp=87.5)
+        res = self.detector.evaluate(x, current_pressure=29.0, current_temp=87.5)
         self.assertTrue(res["is_anomalous"])
         self.assertTrue(res["trip_relay"])
         self.assertEqual(res["fault_cause"], "THERMAL_OVERHEAT")
