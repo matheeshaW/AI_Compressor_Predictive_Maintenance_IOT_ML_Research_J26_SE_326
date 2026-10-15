@@ -4,35 +4,35 @@
     "physical_asset_id": "COMP-RECIP-01",
     "asset_type": "12V_RECIPROCATING_PISTON",
     "twin_version": "1.0.0",
-    "timestamp": "2026-10-15T13:06:15Z",
-    "sync_epoch_ms": 1792069577479,
+    "timestamp": "2026-10-15T13:35:59Z",
+    "sync_epoch_ms": 1792071357989,
     "twin_cycle_index": 95,
     "twin_health_status": "DEGRADED"
   },
   "telemetry_snapshot": {
     "temperature_celsius": 38.8,
     "pressure_psi": 102.8,
-    "delta_pressure_dt": -0.423,
-    "motor_current_rms_a": 15.847,
-    "vibration_x_rms_ms2": 4.29,
-    "vibration_y_rms_ms2": 3.67,
-    "vibration_z_rms_ms2": 2.93,
-    "vibration_kurtosis": 5.27,
-    "vibration_crest_factor": 2.21,
-    "acoustic_energy_mv": 678.1,
+    "delta_pressure_dt": -0.461,
+    "motor_current_rms_a": 16.161,
+    "vibration_x_rms_ms2": 4.39,
+    "vibration_y_rms_ms2": 3.36,
+    "vibration_z_rms_ms2": 3.0,
+    "vibration_kurtosis": 5.34,
+    "vibration_crest_factor": 2.23,
+    "acoustic_energy_mv": 695.4,
     "sample_window_size": 50
   },
   "synchronized_telemetry": {
     "temperature_celsius": 38.8,
     "pressure_psi": 102.8,
-    "delta_pressure_dt": -0.423,
-    "motor_current_rms_a": 15.847,
-    "vibration_x_rms_ms2": 4.29,
-    "vibration_y_rms_ms2": 3.67,
-    "vibration_z_rms_ms2": 2.93,
-    "vibration_kurtosis": 5.27,
-    "vibration_crest_factor": 2.21,
-    "acoustic_energy_mv": 678.1,
+    "delta_pressure_dt": -0.461,
+    "motor_current_rms_a": 16.161,
+    "vibration_x_rms_ms2": 4.39,
+    "vibration_y_rms_ms2": 3.36,
+    "vibration_z_rms_ms2": 3.0,
+    "vibration_kurtosis": 5.34,
+    "vibration_crest_factor": 2.23,
+    "acoustic_energy_mv": 695.4,
     "sample_window_size": 50
   },
   "operating_state": {
@@ -44,7 +44,7 @@
     "transition_count": 3
   },
   "behavioral_intelligence": {
-    "deviation_index": 4.7315,
+    "deviation_index": 5.2483,
     "deviation_threshold": 3.0,
     "persistence_counter": 20,
     "persistence_threshold": 5,
@@ -68,22 +68,22 @@
     }
   },
   "degradation_metrics": {
-    "composite_degradation_score": 0.4529,
-    "pressure_efficiency_ratio": 0.5998,
-    "thermal_dissipation_factor": 0.871,
-    "mechanical_vibration_severity": 0.953
+    "composite_degradation_score": 0.4519,
+    "pressure_efficiency_ratio": 0.6,
+    "thermal_dissipation_factor": 0.854,
+    "mechanical_vibration_severity": 0.976
   },
   "subsystems": {
     "electric_motor": {
       "health_score": 0.774,
       "status": "NOMINAL",
       "operating_temperature_c": 38.8,
-      "rms_current_a": 15.847
+      "rms_current_a": 16.161
     },
     "cylinder_piston_assembly": {
       "health_score": 0.4,
       "status": "PRESSURE_LOSS",
-      "compression_rate_psi_s": -0.423,
+      "compression_rate_psi_s": -0.461,
       "seal_integrity_ratio": 0.6
     },
     "suction_discharge_valves": {
@@ -95,12 +95,12 @@
     "main_bearing_assembly": {
       "health_score": 0.5,
       "status": "WEAR_DETECTED",
-      "vibration_rms_ms2": 4.29,
-      "impact_kurtosis": 5.27
+      "vibration_rms_ms2": 4.39,
+      "impact_kurtosis": 5.34
     }
   },
   "downstream_contract_payload": {
-    "timestamp": "2026-10-15T13:06:15Z",
+    "timestamp": "2026-10-15T13:35:59Z",
     "twin_id": "TWIN-COMP-RECIP-01",
     "operating_state": {
       "cluster_id": 3,
@@ -108,14 +108,14 @@
       "state_confidence": 1.0
     },
     "behavioral_intelligence": {
-      "deviation_index": 4.7315,
+      "deviation_index": 5.2483,
       "persistence_counter": 20,
       "drift_detected": true
     },
     "degradation_metrics": {
-      "composite_degradation_score": 0.4529,
-      "pressure_efficiency_ratio": 0.5998,
-      "thermal_dissipation_factor": 0.871
+      "composite_degradation_score": 0.4519,
+      "pressure_efficiency_ratio": 0.6,
+      "thermal_dissipation_factor": 0.854
     }
   },
   "predictive_diagnostics": {
@@ -126,6 +126,6 @@
       50.0,
       95.0
     ],
-    "health_index": 0.5471
+    "health_index": 0.5481
   }
 }
