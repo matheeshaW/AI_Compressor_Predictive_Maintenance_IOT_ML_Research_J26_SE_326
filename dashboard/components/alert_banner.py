@@ -4,11 +4,12 @@ alert_banner.py
 Emergency safety and anomaly trip banner component.
 """
 
+import textwrap
 import streamlit as st
 
 
-def render_alert_banner(is_tripped: bool, fault_cause: str, latency_us: float = 7.12):
-    """Renders emergency trip status banner if the machine has entered fail-safe cutoff."""
+def render_alert_banner(is_tripped: bool, fault_cause: str, is_anomalous: bool = False, latency_us: float = 7.12):
+    """Renders emergency trip status banner if the machine has entered fail-safe cutoff, or advisory predictive warning banner."""
     if is_tripped:
         html = f"""
         <div style="
@@ -48,7 +49,44 @@ def render_alert_banner(is_tripped: bool, fault_cause: str, latency_us: float = 
             </div>
         </div>
         """
-        st.markdown(html, unsafe_allow_html=True)
+    elif is_anomalous:
+        html = f"""
+        <div style="
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+        ">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 1.3rem;">⚠️</span>
+                <div>
+                    <div style="font-size: 0.95rem; font-weight: 700; color: #FEF3C7; letter-spacing: 0.03em;">
+                        ADVISORY PREDICTIVE ANOMALY DETECTED — COMPRESSOR RUNNING (RELAY ARMED)
+                    </div>
+                    <div style="font-size: 0.78rem; color: #FDE68A; margin-top: 0.15rem;">
+                        Condition: <b>{fault_cause}</b> | Continuous Edge Monitoring Active | Interlock Normal
+                    </div>
+                </div>
+            </div>
+            <div style="
+                background: rgba(245, 158, 11, 0.25);
+                border: 1px solid #F59E0B;
+                padding: 0.35rem 0.75rem;
+                border-radius: 6px;
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 0.75rem;
+                font-weight: 700;
+                color: #FBBF24;
+            ">
+                RELAY: CLOSED (ARMED)
+            </div>
+        </div>
+        """
     else:
         html = """
         <div style="
@@ -68,8 +106,8 @@ def render_alert_banner(is_tripped: bool, fault_cause: str, latency_us: float = 
                 </span>
             </div>
             <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #6EE7B7;">
-                INTERLOCK: ACTIVE-LOW (HEALTHY)
+                INTERLOCK: CLOSED (HEALTHY)
             </span>
         </div>
         """
-        st.markdown(html, unsafe_allow_html=True)
+    st.markdown(textwrap.dedent(html).strip(), unsafe_allow_html=True)

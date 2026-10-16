@@ -4,6 +4,7 @@ metric_card.py
 Industrial Glassmorphism KPI Metric Card Component.
 """
 
+import textwrap
 import streamlit as st
 
 
@@ -64,4 +65,4 @@ def render_metric_card(title: str, value: str, unit: str = "", subtext: str = ""
         </div>
     </div>
     """
-    st.markdown(html, unsafe_allow_html=True)
+    st.markdown(textwrap.dedent(html).strip(), unsafe_allow_html=True)

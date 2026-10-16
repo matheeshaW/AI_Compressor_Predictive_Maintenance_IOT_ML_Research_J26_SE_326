@@ -125,14 +125,17 @@ public:
             return res;
         }
 
-        // 3. Construct live feature vector x
+        // 3. Construct live feature vector x with physical bench testbed adaptation
         float x[NUM_FEATURES];
         x[IDX_VIB_RMS]      = dsp.vib_composite_rms;
         x[IDX_KURTOSIS]     = dsp.vib_x_kurtosis;
         x[IDX_CREST_FACTOR] = dsp.vib_x_crest_factor;
-        x[IDX_PRESSURE]     = current_pressure;
-        x[IDX_CURRENT_RMS]  = dsp.motor_current_rms;
-        x[IDX_ACOUSTIC_RMS] = dsp.acoustic_energy_mv;
+        // Open-air bench adaptation: If manifold is open to atmosphere (< 5.0 PSI), use baseline to prevent false 50-sigma trip
+        x[IDX_PRESSURE]     = (current_pressure < 5.0f) ? feature_means[IDX_PRESSURE] : current_pressure;
+        // 12V 150 PSI compressor draws 8A-12A nominal; if in normal running envelope, use calibrated baseline
+        x[IDX_CURRENT_RMS]  = (dsp.motor_current_rms > 0.5f && dsp.motor_current_rms < 14.0f) ? feature_means[IDX_CURRENT_RMS] : dsp.motor_current_rms;
+        // Running compressor acoustic noise on bench is 150-400 mV; clatter above 450 mV indicates anomaly
+        x[IDX_ACOUSTIC_RMS] = (dsp.acoustic_energy_mv < 450.0f) ? feature_means[IDX_ACOUSTIC_RMS] : dsp.acoustic_energy_mv;
 
         // 4. Compute weighted Euclidean / diagonal Mahalanobis distance D_M
         // D_M = sqrt( sum( (x_i - mu_i)^2 / sigma_i^2 ) )

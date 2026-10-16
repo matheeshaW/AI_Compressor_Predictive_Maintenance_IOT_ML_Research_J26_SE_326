@@ -4,14 +4,28 @@ header.py
 Global top control and branding header for the Next-Gen Monitoring Dashboard.
 """
 
+import textwrap
 import streamlit as st
 
 
-def render_header(is_live_serial: bool = False, is_tripped: bool = False):
+def render_header(is_live_serial: bool = False, is_tripped: bool = False, has_anomaly: bool = False):
     """Renders the top executive control bar with asset details and system status."""
-    status_color = "#EF4444" if is_tripped else ("#06B6D4" if is_live_serial else "#10B981")
-    status_label = "CRITICAL TRIP" if is_tripped else ("LIVE SERIAL (ESP32-S3)" if is_live_serial else "DETERMINISTIC SIMULATION")
-    dot_class = "led-red" if is_tripped else "led-green"
+    if is_tripped:
+        status_color = "#EF4444"
+        status_label = "CRITICAL TRIP"
+        dot_class = "led-red"
+    elif has_anomaly:
+        status_color = "#F59E0B"
+        status_label = "ADVISORY WARNING"
+        dot_class = "led-amber"
+    elif is_live_serial:
+        status_color = "#06B6D4"
+        status_label = "LIVE SERIAL (ESP32-S3)"
+        dot_class = "led-green"
+    else:
+        status_color = "#10B981"
+        status_label = "DETERMINISTIC SIMULATION"
+        dot_class = "led-green"
 
     html = f"""
     <div style="
@@ -78,4 +92,4 @@ def render_header(is_live_serial: bool = False, is_tripped: bool = False):
         </div>
     </div>
     """
-    st.markdown(html, unsafe_allow_html=True)
+    st.markdown(textwrap.dedent(html).strip(), unsafe_allow_html=True)
