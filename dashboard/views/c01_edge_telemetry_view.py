@@ -224,7 +224,10 @@ def render_c01_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
             ]
         }
         df_bench = pd.DataFrame(benchmark_data)
-        st.dataframe(df_bench, use_container_width=True, hide_index=True)
+        try:
+            st.dataframe(df_bench, use_container_width=True, hide_index=True)
+        except Exception:
+            st.table(df_bench)
 
     with bench_col2:
         st.markdown("""

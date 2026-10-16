@@ -5,6 +5,7 @@ Global top control and branding header for the Next-Gen Monitoring Dashboard.
 """
 
 import streamlit as st
+import textwrap
 
 
 def render_header(is_live_serial: bool = False, is_tripped: bool = False):
@@ -13,7 +14,7 @@ def render_header(is_live_serial: bool = False, is_tripped: bool = False):
     status_label = "CRITICAL TRIP" if is_tripped else ("LIVE SERIAL (ESP32-S3)" if is_live_serial else "DETERMINISTIC SIMULATION")
     dot_class = "led-red" if is_tripped else "led-green"
 
-    html = f"""
+    html = textwrap.dedent(f"""
     <div style="
         background: rgba(15, 23, 42, 0.85);
         backdrop-filter: blur(16px);
@@ -77,5 +78,5 @@ def render_header(is_live_serial: bool = False, is_tripped: bool = False):
             </div>
         </div>
     </div>
-    """
+    """)
     st.markdown(html, unsafe_allow_html=True)
