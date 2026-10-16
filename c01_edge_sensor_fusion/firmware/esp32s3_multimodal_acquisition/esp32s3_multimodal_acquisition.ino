@@ -62,8 +62,8 @@ void setup() {
     pinMode(PIN_BUZZER, OUTPUT);
     pinMode(PIN_RELAY, OUTPUT);
 
-    // Initial state: Relay ON (energized/closed for compressor motor), LED ON
-    digitalWrite(PIN_RELAY, LOW); // Active-low optocoupler: LOW = closed/conducting
+    // Initial state: Relay Armed (energized/closed for compressor motor), LED ON
+    digitalWrite(PIN_RELAY, RELAY_STATE_ARMED); // Active-high: HIGH = COM connected to NO (armed)
     digitalWrite(PIN_LED_GREEN, HIGH);
 
     // Startup Diagnostic Beep Sequence (2 chirps)
@@ -210,12 +210,13 @@ void loop() {
 
         if (det.trip_relay || currentFrame.pressure_psi >= PRESSURE_SAFETY_LIMIT_PSI) {
             emergencyCutoffLatched = true;
-            digitalWrite(PIN_RELAY, HIGH); // De-energize active-low relay to trip compressor motor
+            digitalWrite(PIN_RELAY, RELAY_STATE_TRIPPED); // De-energize active-high relay to cut off compressor (<50ms)
             digitalWrite(PIN_BUZZER, HIGH); // Continuous audible alarm tone
             currentFrame.anomaly_flag = true;
         } else {
             if (!emergencyCutoffLatched) {
-                // Keep buzzer silent under normal or non-critical advisory conditions
+                // Keep relay armed and buzzer silent under normal operating conditions
+                digitalWrite(PIN_RELAY, RELAY_STATE_ARMED);
                 digitalWrite(PIN_BUZZER, LOW);
             }
         }
