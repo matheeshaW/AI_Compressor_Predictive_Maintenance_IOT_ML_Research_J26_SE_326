@@ -123,7 +123,7 @@ class XGBoostBaselineModel:
 
 
 def run_xgboost_training_pipeline():
-    """End-to-end execution of the Day 3 XGBoost baseline."""
+    """End-to-end execution of the XGBoost baseline training and evaluation."""
     dataset_path = "c02_predictive_maintenance_rul/data/sample_metropt3_snippet.csv"
     metrics_path = "c02_predictive_maintenance_rul/evaluation/metrics_summary.csv"
     clf_model_path = "c02_predictive_maintenance_rul/src/models/xgboost_fault_model.json"

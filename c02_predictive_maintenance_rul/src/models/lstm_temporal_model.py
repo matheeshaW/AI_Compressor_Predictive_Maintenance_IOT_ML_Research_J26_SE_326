@@ -171,7 +171,7 @@ class LSTMTemporalTrainer:
 
 
 def run_lstm_training_pipeline():
-    """End-to-end execution of Day 4 LSTM temporal baseline."""
+    """End-to-end execution of the Multi-Task LSTM temporal network training and evaluation."""
     dataset_path = "c02_predictive_maintenance_rul/data/sample_metropt3_snippet.csv"
     metrics_path = "c02_predictive_maintenance_rul/evaluation/metrics_summary.csv"
     model_checkpoint_path = "c02_predictive_maintenance_rul/src/models/lstm_model.pt"
