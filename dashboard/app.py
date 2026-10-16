@@ -119,6 +119,9 @@ with st.sidebar:
 
     # 3. Stream Controls & CSV Export
     st.markdown("##### ⏯️ Stream Playback")
+    auto_stream = st.checkbox("⚡ Auto-Stream Telemetry", value=True)
+    refresh_rate = st.slider("Stream Interval (sec)", min_value=0.2, max_value=2.0, value=0.5, step=0.1)
+
     p_col1, p_col2 = st.columns(2)
     with p_col1:
         if st.button("▶️ Step / Tick", use_container_width=True):
@@ -197,3 +200,9 @@ with tab3:
 
 with tab4:
     render_c04_view(current_packet, history_df)
+
+# Continuous Live Auto-Stream Loop
+if auto_stream and st.session_state.is_running:
+    time.sleep(refresh_rate)
+    st.rerun()
+
