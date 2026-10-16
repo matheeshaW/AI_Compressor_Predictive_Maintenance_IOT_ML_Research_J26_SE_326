@@ -257,17 +257,20 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     # ==============================================================================
     # 1. LIVE VIVA INTERACTIVE SCENARIO RIG (GAINS HIGH MARKS IN EXAMINER DEMO)
     # ==============================================================================
+    is_scenario_injected = "c03_active_scenario" in st.session_state and st.session_state.c03_active_scenario
+
     with st.expander("🎮 Live Interactive Viva Perturbation Rig & DSR Hypothesis Testing", expanded=True):
         st.markdown(
             "Inject calibrated operational perturbations directly into the Digital Twin to evaluate dynamic state discovery, "
             "subsystem degradation tracking, and **transient noise rejection vs. persistent drift declaration**:"
         )
 
-        sc_col1, sc_col2, sc_col3, sc_col4, sc_col5 = st.columns(5)
+        sc_col1, sc_col2, sc_col3, sc_col4, sc_col5, sc_col6 = st.columns(6)
 
         with sc_col1:
             if st.button("🟢 Nominal (75 PSI)", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["NOMINAL_LOADED"]["packet"]
+                st.session_state.c03_active_scenario = "Nominal Pressurizing (75 PSI)"
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
                 st.toast("Injected: Healthy Pressurizing Regime")
                 st.rerun()
@@ -275,6 +278,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         with sc_col2:
             if st.button("💨 Valve Leak (92 PSI)", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["PNEUMATIC_VALVE_LEAK"]["packet"]
+                st.session_state.c03_active_scenario = "Pneumatic Valve Leakage (92 PSI)"
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
                 st.toast("Injected: Pneumatic Valve Leakage Fault!")
                 st.rerun()
@@ -282,6 +286,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         with sc_col3:
             if st.button("🔨 Bearing Knock", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["BEARING_SPALL_DAMAGE"]["packet"]
+                st.session_state.c03_active_scenario = "Bearing Impact Knocking"
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
                 st.toast("Injected: Mechanical Bearing Fatigue Impact!")
                 st.rerun()
@@ -289,6 +294,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         with sc_col4:
             if st.button("⚡ Transient Spike", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["TRANSIENT_NOISE_SPIKE"]["packet"]
+                st.session_state.c03_active_scenario = "Transient Noise Spike"
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
                 st.toast("Injected: Single-Frame Transient Noise Spike (Tests Noise Rejection)")
                 st.rerun()
@@ -296,9 +302,20 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         with sc_col5:
             if st.button("🛑 Purge Discharge", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["BLOWDOWN_VENT"]["packet"]
+                st.session_state.c03_active_scenario = "Purge Valve Discharge"
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
                 st.toast("Injected: Purge Valve Discharge")
                 st.rerun()
+
+        with sc_col6:
+            if st.button("🔄 Resume Stream", use_container_width=True, disabled=not is_scenario_injected):
+                st.session_state.c03_active_payload = None
+                st.session_state.c03_active_scenario = None
+                st.toast("Resumed live telemetry stream from sidebar simulator")
+                st.rerun()
+
+        if is_scenario_injected:
+            st.info(f"📍 **Currently Demonstrating Injected Scenario:** `{st.session_state.c03_active_scenario}`. (Click **'🔄 Resume Stream'** to return to continuous sidebar streaming).")
 
     state_info = latest_payload.get("operating_state", {})
     beh_info = latest_payload.get("behavioral_intelligence", {})
@@ -342,11 +359,12 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         """, unsafe_allow_html=True)
 
     with col2:
+        badge_bg = "#10B981" if twin_health == "HEALTHY" else ("#F59E0B" if twin_health in ["WARNING", "DEGRADED"] else "#EF4444")
         st.markdown(f"""
         <div class="glass-card">
-            <div style="font-size: 0.75rem; color: #94A3B8; text-transform: uppercase;">Behavioral Health Index</div>
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.55rem; font-weight: 800; color: {'#10B981' if twin_health == 'HEALTHY' else ('#F59E0B' if twin_health in ['WARNING', 'DEGRADED'] else '#EF4444')}; margin: 0.4rem 0;">
-                {max(0, 100 - int(comp_deg * 100))}% <span style="font-size: 0.85rem; color: #94A3B8;">{twin_health}</span>
+            <div style="font-size: 0.75rem; color: #94A3B8; text-transform: uppercase;">Twin Operating Health Status</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.55rem; font-weight: 800; color: {badge_bg}; margin: 0.4rem 0;">
+                {twin_health} <span style="font-size: 0.85rem; color: #94A3B8;">({max(0, 100 - int(comp_deg * 100))}% Integral)</span>
             </div>
             <div style="font-size: 0.8rem; color: #94A3B8;">Separability: <b>Silhouette = 0.742</b></div>
         </div>
