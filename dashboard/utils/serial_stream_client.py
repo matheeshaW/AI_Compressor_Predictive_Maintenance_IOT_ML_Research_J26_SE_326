@@ -1,8 +1,8 @@
 """
 serial_stream_client.py
 ========================
-Serial COM client reading live JSON telemetry packets from the physical
-ESP32-S3 testbed microcontroller.
+Serial COM client reading live real-time telemetry packets from the physical
+ESP32-S3 testbed microcontroller with zero buffer backlog latency.
 """
 
 import json
@@ -18,14 +18,15 @@ except ImportError:
 
 
 class SerialStreamClient:
-    """Manages serial connection to ESP32-S3 and reads JSON telemetry frames."""
+    """Manages serial connection to ESP32-S3 and reads real-time telemetry frames."""
 
-    def __init__(self, port: Optional[str] = None, baudrate: int = 115200, timeout: float = 0.5):
+    def __init__(self, port: Optional[str] = None, baudrate: int = 115200, timeout: float = 0.05):
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
         self.ser = None
         self.is_connected = False
+        self.vib_history: List[float] = []
 
     @staticmethod
     def list_available_ports() -> List[str]:
@@ -49,27 +50,67 @@ class SerialStreamClient:
                 return False
 
         try:
-            self.ser = serial.Serial(target_port, self.baudrate, timeout=self.timeout)
+            # Use non-exclusive, fast-timeout serial configuration
+            self.ser = serial.Serial(
+                port=target_port,
+                baudrate=self.baudrate,
+                timeout=self.timeout,
+                write_timeout=0.1
+            )
             self.port = target_port
             self.is_connected = True
-            time.sleep(1.0)  # Allow bootloader settling
+            self.vib_history = []
+            time.sleep(0.1)  # Brief settling
+            # Flush any stale boot messages from previous runs
+            self.ser.reset_input_buffer()
             return True
-        except Exception as e:
+        except Exception:
             self.is_connected = False
             return False
 
     def read_packet(self) -> Optional[Dict[str, Any]]:
-        """Reads and parses a telemetry packet (JSON or CSV) from the serial stream."""
+        """
+        Reads and parses the LATEST real-time telemetry packet.
+        Drains any queued backlog in the OS UART buffer so the dashboard displays
+        instantaneous sensor telemetry matching physical reality with zero lag.
+        """
         if not self.is_connected or not self.ser:
             return None
 
         try:
-            line = self.ser.readline().decode('utf-8', errors='ignore').strip()
-            if not line:
+            lines = []
+            # Drain all queued lines waiting in the OS serial buffer
+            while self.ser.in_waiting > 0:
+                raw = self.ser.readline().decode('utf-8', errors='ignore').strip()
+                if raw:
+                    lines.append(raw)
+                if len(lines) > 100:
+                    break
+
+            # If no backlog was queued, perform a single read
+            if not lines:
+                raw = self.ser.readline().decode('utf-8', errors='ignore').strip()
+                if raw:
+                    lines.append(raw)
+
+            if not lines:
                 return None
 
-            # 1. JSON Packet format
-            if line.startswith("{") and line.endswith("}"):
+            # Iterate backwards (from NEWEST line to oldest) to find the latest valid telemetry packet
+            for line in reversed(lines):
+                parsed = self._parse_line(line)
+                if parsed is not None:
+                    return parsed
+
+        except Exception:
+            pass
+        return None
+
+    def _parse_line(self, line: str) -> Optional[Dict[str, Any]]:
+        """Parses a single raw serial line (JSON or CSV)."""
+        # 1. JSON Packet format
+        if line.startswith("{") and line.endswith("}"):
+            try:
                 data = json.loads(line)
                 if "features" in data and "edge_status" in data:
                     f = data["features"]
@@ -93,12 +134,14 @@ class SerialStreamClient:
                         "is_anomalous": anomaly_flag,
                         "trip_relay": relay_tripped
                     }
-                return data
+            except Exception:
+                pass
 
-            # 2. Standard CSV Telemetry Packet (12 comma-separated values)
-            # timestamp_ms,temp_c,press_psi,press_v,curr_a,curr_v,sound_mv,vib_x,vib_y,vib_z,anomaly,relay
-            parts = [p.strip() for p in line.split(',')]
-            if len(parts) >= 12 and parts[0].isdigit():
+        # 2. Standard CSV Telemetry Packet (12 comma-separated values)
+        # timestamp_ms,temp_c,press_psi,press_v,curr_a,curr_v,sound_mv,vib_x,vib_y,vib_z,anomaly,relay
+        parts = [p.strip() for p in line.split(',')]
+        if len(parts) >= 12 and parts[0].isdigit():
+            try:
                 t_ms = int(parts[0])
                 temp_c = float(parts[1])
                 press_psi = float(parts[2])
@@ -112,25 +155,44 @@ class SerialStreamClient:
                 anomaly = int(parts[10]) == 1
                 relay_latched = int(parts[11]) == 1
 
-                # Calculate vibration composite vector
+                # Calculate composite acceleration magnitude
                 v_composite = (vib_x**2 + vib_y**2 + vib_z**2)**0.5
                 v_rms_g = v_composite / 9.80665
 
-                # Hardware relay trip state vs advisory anomaly
-                if relay_latched:
-                    kurtosis = 8.8
-                    crest_factor = 6.2
-                    score = 0.98
-                    fault_cause = "CRITICAL_OVERPRESSURE" if press_psi >= 45.0 else ("BEARING_VALVE_KNOCK" if (sound_mv > 150.0 or v_rms_g > 0.8) else "HARDWARE_EMERGENCY_TRIP")
-                elif anomaly:
-                    # Advisory warning condition (machine still running safely with relay armed)
-                    kurtosis = 5.8 if (sound_mv > 200.0 or v_rms_g > 0.6) else 3.8
-                    crest_factor = 4.2 if sound_mv > 200.0 else 2.6
-                    score = 0.55
-                    fault_cause = "ACOUSTIC_ANOMALY" if sound_mv > 300.0 else ("MOTOR_OVERCURRENT" if curr_a > 13.0 else "STATISTICAL_OUTLIER")
+                # Update rolling vibration history for dynamic DSP kurtosis & crest factor
+                self.vib_history.append(v_composite)
+                if len(self.vib_history) > 30:
+                    self.vib_history.pop(0)
+
+                # Compute dynamic statistical kurtosis & crest factor
+                if len(self.vib_history) >= 8:
+                    vals = self.vib_history
+                    mean_v = sum(vals) / len(vals)
+                    var_v = sum((x - mean_v)**2 for x in vals) / len(vals)
+                    m4 = sum((x - mean_v)**4 for x in vals) / len(vals)
+                    computed_kurtosis = m4 / (var_v**2) if var_v > 0.01 else 3.0
+                    peak_v = max(vals)
+                    computed_crest = peak_v / mean_v if mean_v > 0.1 else 1.5
                 else:
-                    kurtosis = 3.02
-                    crest_factor = 2.1
+                    computed_kurtosis = 3.02
+                    computed_crest = 1.8
+
+                # If sharp physical vibration shock detected on latest sample
+                if v_rms_g > 1.8 or computed_kurtosis > 7.0:
+                    kurtosis = max(computed_kurtosis, 8.2)
+                    crest_factor = max(computed_crest, 6.2)
+                else:
+                    kurtosis = computed_kurtosis
+                    crest_factor = computed_crest
+
+                # Fault classification and severity score
+                if relay_latched:
+                    score = 0.98
+                    fault_cause = "CRITICAL_OVERPRESSURE" if press_psi >= 45.0 else ("BEARING_VALVE_KNOCK" if (kurtosis >= 7.5 or sound_mv > 450.0) else "HARDWARE_EMERGENCY_TRIP")
+                elif anomaly:
+                    score = 0.55
+                    fault_cause = "BEARING_VALVE_KNOCK" if kurtosis >= 7.0 else ("ACOUSTIC_ANOMALY" if sound_mv > 300.0 else ("MOTOR_OVERCURRENT" if curr_a > 13.0 else "STATISTICAL_OUTLIER"))
+                else:
                     score = 0.08
                     fault_cause = "NORMAL"
 
@@ -152,12 +214,17 @@ class SerialStreamClient:
                     "is_anomalous": anomaly,
                     "trip_relay": relay_latched
                 }
-        except Exception:
-            pass
+            except Exception:
+                pass
         return None
 
     def close(self):
         """Closes the active serial connection."""
         if self.ser and self.ser.is_open:
-            self.ser.close()
+            try:
+                self.ser.close()
+            except Exception:
+                pass
         self.is_connected = False
+        self.vib_history = []
+

@@ -4,8 +4,12 @@ header.py
 Global top control and branding header for the Next-Gen Monitoring Dashboard.
 """
 
-import textwrap
 import streamlit as st
+
+
+def clean_html(raw: str) -> str:
+    """Removes all leading/trailing indentation and empty lines so Streamlit markdown never creates code blocks."""
+    return "\n".join(line.strip() for line in raw.splitlines() if line.strip())
 
 
 def render_header(is_live_serial: bool = False, is_tripped: bool = False, has_anomaly: bool = False):
@@ -28,31 +32,9 @@ def render_header(is_live_serial: bool = False, is_tripped: bool = False, has_an
         dot_class = "led-green"
 
     html = f"""
-    <div style="
-        background: rgba(15, 23, 42, 0.85);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-bottom: 1px solid rgba(148, 163, 184, 0.15);
-        padding: 0.9rem 1.5rem;
-        margin-bottom: 1.5rem;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
-    ">
+    <div style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding: 0.9rem 1.5rem; margin-bottom: 1.5rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);">
         <div style="display: flex; align-items: center; gap: 1rem;">
-            <div style="
-                background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%);
-                width: 44px;
-                height: 44px;
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.4rem;
-                box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
-            ">
+            <div style="background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%); width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);">
                 ⚡
             </div>
             <div>
@@ -64,7 +46,6 @@ def render_header(is_live_serial: bool = False, is_tripped: bool = False, has_an
                 </div>
             </div>
         </div>
-
         <div style="display: flex; align-items: center; gap: 1.5rem;">
             <div style="text-align: right;">
                 <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #64748B;">
@@ -74,16 +55,7 @@ def render_header(is_live_serial: bool = False, is_tripped: bool = False, has_an
                     12V DC Metal Compressor (150 PSI)
                 </div>
             </div>
-
-            <div style="
-                background: rgba(17, 24, 39, 0.8);
-                border: 1px solid {status_color}40;
-                padding: 0.35rem 0.85rem;
-                border-radius: 9999px;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            ">
+            <div style="background: rgba(17, 24, 39, 0.8); border: 1px solid {status_color}40; padding: 0.35rem 0.85rem; border-radius: 9999px; display: flex; align-items: center; gap: 0.5rem;">
                 <span class="led-dot {dot_class}"></span>
                 <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: {status_color};">
                     {status_label}
@@ -92,4 +64,4 @@ def render_header(is_live_serial: bool = False, is_tripped: bool = False, has_an
         </div>
     </div>
     """
-    st.markdown(textwrap.dedent(html).strip(), unsafe_allow_html=True)
+    st.markdown(clean_html(html), unsafe_allow_html=True)
