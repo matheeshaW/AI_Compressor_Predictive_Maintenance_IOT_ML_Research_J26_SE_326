@@ -200,10 +200,16 @@ def test_subsystem_health_decomposition_nominal(initialized_engine):
     assert subsystems["main_bearing_assembly"]["status"] == "NOMINAL"
 
 
-def test_subsystem_health_decomposition_faults(initialized_engine):
+def test_subsystem_health_decomposition_faults(baseline_data):
     """Injected localized mechanical/pneumatic faults reflect in specific subsystem alerts."""
+    engine = IndustrialDigitalTwinEngine(asset_id="COMP-RECIP-FAULT-TEST")
+    engine.initialize_with_baseline(baseline_data)
+
+    base_t = 1773000000000
+
     # Fault 1: Motor overload
     overload_packet = {
+        "timestamp_ms": base_t,
         "pressure_psi": 50.0,
         "delta_pressure_dt": 0.5,
         "motor_current_rms_a": 25.0,  # Overload current > 22A
@@ -212,12 +218,13 @@ def test_subsystem_health_decomposition_faults(initialized_engine):
         "vibration_kurtosis": 3.0,
         "acoustic_energy_mv": 120.0,
     }
-    payload1 = initialized_engine.step(overload_packet)
+    payload1 = engine.step(overload_packet)
     motor = payload1["subsystems"]["electric_motor"]
     assert motor["status"] == "CURRENT_OVERLOAD"
 
     # Fault 2: Valve leakage
     leak_packet = {
+        "timestamp_ms": base_t + 2000,
         "pressure_psi": 92.0,
         "delta_pressure_dt": -0.45,
         "motor_current_rms_a": 13.5,
@@ -226,7 +233,7 @@ def test_subsystem_health_decomposition_faults(initialized_engine):
         "vibration_kurtosis": 4.5,
         "acoustic_energy_mv": 650.0,  # Acoustic hissing > 500 mV
     }
-    payload2 = initialized_engine.step(leak_packet)
+    payload2 = engine.step(leak_packet)
     valves = payload2["subsystems"]["suction_discharge_valves"]
     if payload2["operating_state"]["state_label"] == OperatingStateLabel.ANOMALOUS_LEAK_REGIME.value:
         assert valves["valve_leakage_detected"]
@@ -234,15 +241,16 @@ def test_subsystem_health_decomposition_faults(initialized_engine):
 
     # Fault 3: Bearing impact damage
     bearing_packet = {
+        "timestamp_ms": base_t + 4000,
         "pressure_psi": 25.0,
         "delta_pressure_dt": 0.0,
         "motor_current_rms_a": 4.5,
         "temperature_celsius": 38.0,
-        "vibration_x_rms_ms2": 5.5,  # High radial acceleration
+        "vibration_x_rms_ms2": 5.5,  # High radial acceleration > 4.5
         "vibration_kurtosis": 6.8,    # Severe impact spalls > 5.5
         "acoustic_energy_mv": 80.0,
     }
-    payload3 = initialized_engine.step(bearing_packet)
+    payload3 = engine.step(bearing_packet)
     bearing = payload3["subsystems"]["main_bearing_assembly"]
     assert bearing["status"] == "IMPACTING"
     assert bearing["health_score"] <= 0.50
