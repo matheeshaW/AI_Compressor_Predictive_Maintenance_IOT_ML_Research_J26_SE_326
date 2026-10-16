@@ -1,8 +1,25 @@
 """
-Conventional Heuristic Baseline Maintenance Policies.
+Conventional Heuristic Baseline Maintenance Policies for Industrial Air Compressors.
 """
 
-from .run_to_failure_policy import RunToFailurePolicy
-from .periodic_maintenance_policy import PeriodicMaintenancePolicy
+from .heuristic_policies import (
+    BasePolicy,
+    RunToFailurePolicy,
+    PeriodicMaintenancePolicy,
+    ConditionBasedMaintenancePolicy,
+    ACTION_OPERATE_NORMALLY,
+    ACTION_INSPECT_AND_MINOR_SERVICE,
+    ACTION_SCHEDULE_MEDIUM_MAINTENANCE,
+    ACTION_EMERGENCY_MAJOR_MAINTENANCE,
+)
 
-__all__ = ["RunToFailurePolicy", "PeriodicMaintenancePolicy"]
+__all__ = [
+    "BasePolicy",
+    "RunToFailurePolicy",
+    "PeriodicMaintenancePolicy",
+    "ConditionBasedMaintenancePolicy",
+    "ACTION_OPERATE_NORMALLY",
+    "ACTION_INSPECT_AND_MINOR_SERVICE",
+    "ACTION_SCHEDULE_MEDIUM_MAINTENANCE",
+    "ACTION_EMERGENCY_MAJOR_MAINTENANCE",
+]
