@@ -1,0 +1,88 @@
+/* Industrial Dark Theme & Glassmorphism Design Tokens */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
+:root {
+    --bg-primary: #0a0e17;
+    --bg-card: rgba(18, 26, 42, 0.75);
+    --border-card: rgba(255, 255, 255, 0.08);
+    --accent-cyan: #00f2fe;
+    --accent-blue: #4facfe;
+    --accent-emerald: #00e676;
+    --accent-amber: #ffab00;
+    --accent-red: #ff5252;
+    --text-primary: #f0f4f8;
+    --text-muted: #8a99ad;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+h1,
+h2,
+h3,
+h4,
+.outfit-font {
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: -0.02em;
+}
+
+.glass-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-card);
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.glass-card:hover {
+    border-color: rgba(0, 242, 254, 0.3);
+}
+
+.kpi-title {
+    color: var(--text-muted);
+    font-size: 0.80rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.kpi-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.kpi-sub {
+    font-size: 0.80rem;
+    color: var(--text-muted);
+}
+
+.badge-normal {
+    background: rgba(0, 230, 118, 0.15);
+    color: var(--accent-emerald);
+    border: 1px solid rgba(0, 230, 118, 0.3);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-alert {
+    background: rgba(255, 82, 82, 0.15);
+    color: var(--accent-red);
+    border: 1px solid rgba(255, 82, 82, 0.3);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
