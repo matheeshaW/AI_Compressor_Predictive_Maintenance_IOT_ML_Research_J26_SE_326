@@ -139,7 +139,7 @@ with st.sidebar:
     # 3. Stream Controls & CSV Export
     st.markdown("##### ⏯️ Stream Playback")
     auto_stream = st.checkbox("⚡ Auto-Stream Telemetry", value=True)
-    refresh_rate = st.slider("Stream Interval (sec)", min_value=0.1, max_value=2.0, value=0.2, step=0.1)
+    refresh_rate = st.slider("Stream Interval (sec)", min_value=0.15, max_value=2.0, value=0.30, step=0.05)
 
     p_col1, p_col2 = st.columns(2)
     with p_col1:
@@ -148,6 +148,7 @@ with st.sidebar:
     with p_col2:
         if st.button("🧹 Clear Logs", use_container_width=True):
             st.session_state.history = []
+            st.session_state.total_steps = 0
             st.session_state.simulator = CompressorTelemetrySimulator()
             st.rerun()
 
@@ -167,17 +168,23 @@ with st.sidebar:
 # ==============================================================================
 # DATA INGESTION & DISPATCH
 # ==============================================================================
+if "total_steps" not in st.session_state:
+    st.session_state.total_steps = 0
+
 current_packet = None
 if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
     raw_packet = st.session_state.serial_client.read_packet()
     if raw_packet:
         current_packet = raw_packet
-        current_packet["step"] = len(st.session_state.history) + 1
+        st.session_state.total_steps += 1
+        current_packet["step"] = st.session_state.total_steps
     elif st.session_state.history:
         current_packet = st.session_state.history[-1]
 else:
     # Use deterministic physical simulator
     current_packet = st.session_state.simulator.step()
+    st.session_state.total_steps += 1
+    current_packet["step"] = st.session_state.total_steps
 
 if current_packet:
     st.session_state.history.append(current_packet)
