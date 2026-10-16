@@ -22,9 +22,18 @@ if str(REPO_ROOT) not in sys.path:
 if str(C03_ROOT) not in sys.path:
     sys.path.insert(0, str(C03_ROOT))
 
-from c03_digital_twin_behavioral.src.twin_engine import IndustrialDigitalTwinEngine
-from c03_digital_twin_behavioral.src.clustering.cluster_evaluator import ClusterEvaluator
-from c03_digital_twin_behavioral.src.clustering.state_discovery import OperatingStateLabel
+try:
+    from c03_digital_twin_behavioral.src.twin_engine import IndustrialDigitalTwinEngine
+    from c03_digital_twin_behavioral.src.clustering.cluster_evaluator import ClusterEvaluator
+    from c03_digital_twin_behavioral.src.clustering.state_discovery import OperatingStateLabel
+    C03_IMPORTS_LOADED = True
+    C03_IMPORT_ERROR = None
+except Exception as _c03_err:
+    C03_IMPORTS_LOADED = False
+    C03_IMPORT_ERROR = str(_c03_err)
+    IndustrialDigitalTwinEngine = None
+    ClusterEvaluator = None
+    OperatingStateLabel = None
 
 
 class DigitalTwinViewController:
@@ -226,6 +235,16 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         import plotly.graph_objects as go
     except ImportError:
         print("[WARNING] Streamlit/Plotly is not installed. Digital Twin View cannot render GUI directly.")
+        return
+
+    if not C03_IMPORTS_LOADED:
+        st.error(f"⚠️ **Component 03 Digital Twin Dependency Missing:** `{C03_IMPORT_ERROR}`")
+        st.info(
+            "To view Component 03, please install the required ML packages in your terminal:\n\n"
+            "```powershell\npip install -r dashboard/requirements.txt\n```\n"
+            "or:\n"
+            "```powershell\npip install joblib scikit-learn scipy\n```"
+        )
         return
 
     # Ensure session controller is instantiated

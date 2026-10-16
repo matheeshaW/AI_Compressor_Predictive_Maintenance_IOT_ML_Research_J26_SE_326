@@ -9,7 +9,24 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any, Union
-import joblib
+try:
+    import joblib
+except ImportError:
+    import pickle
+
+    class _JoblibFallback:
+        @staticmethod
+        def dump(value, filename, **kwargs):
+            with open(filename, "wb") as f:
+                pickle.dump(value, f)
+
+        @staticmethod
+        def load(filename, **kwargs):
+            with open(filename, "rb") as f:
+                return pickle.load(f)
+
+    joblib = _JoblibFallback()
+
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
