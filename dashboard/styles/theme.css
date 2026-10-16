@@ -1,222 +1,88 @@
-/* ==========================================================================
-   Industrial AI Compressor Intelligence Platform — Dark Glassmorphism Theme
-   SLIIT Research Project J26-SE-326
-   ========================================================================== */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+/* Industrial Dark Theme & Glassmorphism Design Tokens */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
 
 :root {
-    --bg-primary: #0A0E17;
-    --bg-secondary: #111827;
-    --bg-card: rgba(17, 24, 39, 0.75);
-    --bg-card-hover: rgba(30, 41, 59, 0.85);
-    --border-subtle: rgba(148, 163, 184, 0.15);
-    --border-accent: rgba(6, 182, 212, 0.4);
-    
-    --neon-cyan: #06B6D4;
-    --neon-blue: #3B82F6;
-    --neon-emerald: #10B981;
-    --neon-amber: #F59E0B;
-    --neon-rose: #EF4444;
-    --neon-violet: #8B5CF6;
-
-    --text-primary: #F8FAFC;
-    --text-secondary: #94A3B8;
-    --text-muted: #64748B;
-    
-    --font-heading: 'Outfit', sans-serif;
-    --font-body: 'Inter', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --bg-primary: #0a0e17;
+    --bg-card: rgba(18, 26, 42, 0.75);
+    --border-card: rgba(255, 255, 255, 0.08);
+    --accent-cyan: #00f2fe;
+    --accent-blue: #4facfe;
+    --accent-emerald: #00e676;
+    --accent-amber: #ffab00;
+    --accent-red: #ff5252;
+    --text-primary: #f0f4f8;
+    --text-muted: #8a99ad;
 }
 
-/* Base Body & App Container */
-html, body, [class*="stApp"] {
-    background: radial-gradient(circle at 15% 15%, #131D31 0%, #0A0E17 100%) !important;
-    font-family: var(--font-body) !important;
-    color: var(--text-primary) !important;
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
 }
 
-/* Streamlit Header & Toolbar Overrides */
-header[data-testid="stHeader"] {
-    background: transparent !important;
+h1,
+h2,
+h3,
+h4,
+.outfit-font {
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: -0.02em;
 }
 
-/* Glassmorphism Cards */
 .glass-card {
     background: var(--bg-card);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--border-subtle);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-card);
     border-radius: 12px;
-    padding: 1.25rem;
+    padding: 18px 22px;
+    margin-bottom: 16px;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    transition: all 0.25s ease-in-out;
-}
-
-.glass-card:hover {
-    border-color: var(--border-accent);
-    box-shadow: 0 10px 40px 0 rgba(6, 182, 212, 0.15);
-}
-
-/* Industrial KPI Metric Card */
-.kpi-container {
-    background: rgba(15, 23, 42, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
     transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
-.kpi-container:hover {
-    transform: translateY(-2px);
-    border-color: var(--neon-cyan);
+.glass-card:hover {
+    border-color: rgba(0, 242, 254, 0.3);
 }
 
 .kpi-title {
-    font-family: var(--font-body);
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-secondary);
-}
-
-.kpi-value {
-    font-family: var(--font-mono);
-    font-size: 1.85rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0.35rem 0;
-}
-
-.kpi-subtext {
-    font-size: 0.75rem;
     color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-}
-
-/* Status Badges */
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.25rem 0.65rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
+    font-size: 0.80rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.kpi-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.kpi-sub {
+    font-size: 0.80rem;
+    color: var(--text-muted);
 }
 
 .badge-normal {
-    background: rgba(16, 185, 129, 0.15);
-    color: var(--neon-emerald);
-    border: 1px solid rgba(16, 185, 129, 0.35);
+    background: rgba(0, 230, 118, 0.15);
+    color: var(--accent-emerald);
+    border: 1px solid rgba(0, 230, 118, 0.3);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
-.badge-warning {
-    background: rgba(245, 158, 11, 0.15);
-    color: var(--neon-amber);
-    border: 1px solid rgba(245, 158, 11, 0.35);
-}
-
-.badge-danger {
-    background: rgba(239, 68, 68, 0.2);
-    color: var(--neon-rose);
-    border: 1px solid rgba(239, 68, 68, 0.5);
-    animation: pulse-danger 1.5s infinite;
-}
-
-@keyframes pulse-danger {
-    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
-    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-
-/* Pulsing LED status dot */
-.led-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.led-green {
-    background-color: var(--neon-emerald);
-    box-shadow: 0 0 8px var(--neon-emerald);
-}
-
-.led-red {
-    background-color: var(--neon-rose);
-    box-shadow: 0 0 10px var(--neon-rose);
-    animation: blink-led 0.8s infinite;
-}
-
-@keyframes blink-led {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.2; }
-}
-
-/* Emergency Safety Banner */
-.emergency-banner {
-    background: linear-gradient(90deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.35) 100%);
-    border: 1px solid var(--neon-rose);
-    border-radius: 10px;
-    padding: 0.9rem 1.25rem;
-    margin-bottom: 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    animation: banner-glow 2s infinite alternate;
-}
-
-@keyframes banner-glow {
-    from { box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
-    to { box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); }
-}
-
-/* Tab Overrides */
-.stTabs [data-baseweb="tab-list"] {
-    background: rgba(15, 23, 42, 0.6);
-    border-radius: 10px;
-    padding: 4px;
-    border: 1px solid var(--border-subtle);
-    gap: 6px;
-}
-
-.stTabs [data-baseweb="tab"] {
-    border-radius: 8px !important;
-    padding: 8px 18px !important;
-    color: var(--text-secondary) !important;
-    font-weight: 500 !important;
-    font-size: 0.9rem !important;
-    transition: all 0.2s ease !important;
-}
-
-.stTabs [aria-selected="true"] {
-    background: rgba(6, 182, 212, 0.18) !important;
-    color: var(--neon-cyan) !important;
-    font-weight: 700 !important;
-    border-bottom: 2px solid var(--neon-cyan) !important;
-}
-
-/* Custom Scrollbars */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-::-webkit-scrollbar-track {
-    background: #0A0E17;
-}
-::-webkit-scrollbar-thumb {
-    background: #334155;
-    border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #06B6D4;
+.badge-alert {
+    background: rgba(255, 82, 82, 0.15);
+    color: var(--accent-red);
+    border: 1px solid rgba(255, 82, 82, 0.3);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
