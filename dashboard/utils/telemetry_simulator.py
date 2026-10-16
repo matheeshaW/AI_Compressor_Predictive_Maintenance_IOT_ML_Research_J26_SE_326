@@ -31,6 +31,26 @@ class CompressorTelemetrySimulator:
             self.relay_state = "ENERGIZED_CLOSED"
             self.fault_cause = "NORMAL"
 
+    def manual_start(self):
+        """Manually arms the relay and starts the compressor."""
+        self.relay_state = "ENERGIZED_CLOSED"
+        self.fault_cause = "NORMAL"
+        self.active_regime = "NOMINAL"
+        self.anomaly_score = 0.05
+
+    def manual_stop(self):
+        """Manually trips the relay (E-Stop)."""
+        self.relay_state = "TRIPPED_OPEN"
+        self.fault_cause = "MANUAL_ESTOP"
+        self.anomaly_score = 0.95
+
+    def reset_interlock(self):
+        """Resets emergency interlock and returns machine to nominal armed state."""
+        self.relay_state = "ENERGIZED_CLOSED"
+        self.fault_cause = "NORMAL"
+        self.active_regime = "NOMINAL"
+        self.anomaly_score = 0.05
+
     def step(self) -> Dict[str, Any]:
         """Advances the physical simulation by one time step (~1.0s or frame step)."""
         self.step_idx += 1

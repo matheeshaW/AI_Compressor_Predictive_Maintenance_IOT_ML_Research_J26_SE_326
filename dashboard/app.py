@@ -116,7 +116,44 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 2. Live Fault Injection Trigger Rig
+    # 2. Hardware Actuator & Safety Interlock Control
+    st.markdown("##### ⚡ Actuator & Interlock Control")
+    st.caption("Direct hardware relay control & emergency unlatch:")
+
+    act_col1, act_col2 = st.columns(2)
+    with act_col1:
+        if st.button("🟢 Start", use_container_width=True, help="Arm relay and start compressor"):
+            if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
+                st.session_state.serial_client.send_command("CMD:START")
+                st.toast("Sent CMD:START to ESP32-S3")
+            else:
+                st.session_state.simulator.manual_start()
+                st.toast("Simulator: Compressor armed and started")
+
+    with act_col2:
+        if st.button("⏹️ E-Stop", use_container_width=True, help="Emergency power isolation (de-energize relay)"):
+            if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
+                st.session_state.serial_client.send_command("CMD:STOP")
+                st.toast("Sent CMD:STOP to ESP32-S3 (Relay Cut)")
+            else:
+                st.session_state.simulator.manual_stop()
+                st.toast("Simulator: Manual E-Stop triggered")
+
+    if st.button("🔄 Reset Safety Interlock", use_container_width=True, type="primary", help="Unlatch safety trip, silence buzzer, and re-arm relay"):
+        if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
+            ok = st.session_state.serial_client.send_command("CMD:RESET")
+            if ok:
+                st.toast("Sent CMD:RESET to ESP32-S3 (Interlock Cleared)")
+            else:
+                st.error("Failed to send CMD:RESET over serial")
+        else:
+            st.session_state.simulator.reset_interlock()
+            st.toast("Simulator: Interlock cleared to NOMINAL")
+        st.rerun()
+
+    st.markdown("---")
+
+    # 3. Live Fault Injection Trigger Rig
     st.markdown("##### 💥 Live Fault Injection Rig")
     st.caption("Perturb the machine in real-time to demonstrate multi-modal anomaly detection and automated relay tripping:")
 
@@ -145,10 +182,10 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 3. Stream Controls & CSV Export
+    # 4. Stream Controls & CSV Export
     st.markdown("##### ⏯️ Stream Playback")
     auto_stream = st.checkbox("⚡ Auto-Stream Telemetry", value=True)
-    refresh_rate = st.slider("Stream Interval (sec)", min_value=0.15, max_value=2.0, value=0.30, step=0.05)
+    refresh_rate = st.slider("Stream Interval (sec)", min_value=0.15, max_value=2.0, value=1.30, step=0.05)
 
     p_col1, p_col2 = st.columns(2)
     with p_col1:

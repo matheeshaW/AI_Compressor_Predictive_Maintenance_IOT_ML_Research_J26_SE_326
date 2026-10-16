@@ -110,6 +110,34 @@ void loop() {
     uint32_t now = millis();
 
     // -------------------------------------------------------------
+    // TASK 0: Process Host Serial Commands (START, STOP, RESET)
+    // -------------------------------------------------------------
+    while (Serial.available() > 0) {
+        String cmd = Serial.readStringUntil('\n');
+        cmd.trim();
+        if (cmd == "CMD:RESET") {
+            emergencyCutoffLatched = false;
+            digitalWrite(PIN_RELAY, RELAY_STATE_ARMED);
+            digitalWrite(PIN_BUZZER, LOW);
+            featureExtractor.reset();
+            Serial.println("[ACK] SAFETY_INTERLOCK_RESET");
+            Serial0.println("[ACK] SAFETY_INTERLOCK_RESET");
+        } else if (cmd == "CMD:STOP") {
+            emergencyCutoffLatched = true;
+            digitalWrite(PIN_RELAY, RELAY_STATE_TRIPPED);
+            digitalWrite(PIN_BUZZER, LOW);
+            Serial.println("[ACK] MANUAL_ESTOP_TRIPPED");
+            Serial0.println("[ACK] MANUAL_ESTOP_TRIPPED");
+        } else if (cmd == "CMD:START") {
+            emergencyCutoffLatched = false;
+            digitalWrite(PIN_RELAY, RELAY_STATE_ARMED);
+            digitalWrite(PIN_BUZZER, LOW);
+            Serial.println("[ACK] MACHINE_ARMED_STARTED");
+            Serial0.println("[ACK] MACHINE_ARMED_STARTED");
+        }
+    }
+
+    // -------------------------------------------------------------
     // TASK 1: LED Heartbeat (500 ms)
     // -------------------------------------------------------------
     if (now - lastHeartbeatTime >= HEARTBEAT_INTERVAL_MS) {
