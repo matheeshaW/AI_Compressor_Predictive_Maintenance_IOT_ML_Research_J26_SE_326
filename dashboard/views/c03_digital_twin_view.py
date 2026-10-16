@@ -127,6 +127,7 @@ class DigitalTwinViewController:
         )
         self.is_initialized = False
         self._history: List[Dict[str, Any]] = []
+        self.latest_payload: Optional[Dict[str, Any]] = None
 
     def initialize_default(self) -> None:
         """Initializes the twin models using synthetic calibrated baseline data."""
@@ -173,6 +174,7 @@ class DigitalTwinViewController:
         if len(self._history) > 200:
             self._history.pop(0)
 
+        self.latest_payload = payload
         return payload
 
     def get_history(self) -> List[Dict[str, Any]]:
@@ -239,10 +241,15 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         latest_payload = st.session_state.c03_active_payload
     elif current_packet is not None:
         latest_payload = controller.process_telemetry(current_packet)
-    elif controller.get_history():
+    elif controller.latest_payload is not None:
+        latest_payload = controller.latest_payload
+    elif hasattr(controller.engine, "get_state_snapshot"):
         latest_payload = controller.engine.get_state_snapshot()
     else:
         # Initial boot nominal step
+        latest_payload = controller.process_telemetry(DigitalTwinViewController.VIVA_SCENARIOS["NOMINAL_LOADED"]["packet"])
+
+    if latest_payload is None:
         latest_payload = controller.process_telemetry(DigitalTwinViewController.VIVA_SCENARIOS["NOMINAL_LOADED"]["packet"])
 
     # Header & Academic Identity

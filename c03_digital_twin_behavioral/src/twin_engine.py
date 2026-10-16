@@ -91,6 +91,7 @@ class IndustrialDigitalTwinEngine:
         self._last_assessment: Optional[BehavioralAssessment] = None
         self._last_behavioral_dict: Dict[str, Any] = {}
         self._last_degradation_dict: Dict[str, Any] = {}
+        self._last_state_payload: Optional[Dict[str, Any]] = None
 
     def initialize_with_baseline(
         self,
@@ -291,7 +292,17 @@ class IndustrialDigitalTwinEngine:
                 "health_index": round(float(np.clip(1.0 - composite_score, 0.0, 1.0)), 4),
             }
 
+        self._last_state_payload = payload
         return payload
+
+    def get_state_snapshot(self) -> Dict[str, Any]:
+        """
+        Returns the most recent complete digital twin state payload snapshot conforming to
+        digital_twin_state_schema.json. If no step has been executed yet, steps with nominal healthy packet.
+        """
+        if self._last_state_payload is not None:
+            return self._last_state_payload
+        return self.step()
 
     def get_c04_prescriptive_payload(self) -> Dict[str, Any]:
         """

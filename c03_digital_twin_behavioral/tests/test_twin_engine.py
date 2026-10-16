@@ -1,3 +1,4 @@
+
 """
 tests/test_twin_engine.py
 Component 03: Industrial Digital Twin & Behavioral Intelligence
@@ -378,4 +379,33 @@ def test_view_controller_headless_processing():
     history = ctrl.get_history()
     assert len(history) == 1
     assert history[0]["pressure_psi"] == 75.0
+    assert ctrl.latest_payload is not None
+    assert ctrl.latest_payload["metadata"]["twin_id"] == "TWIN-COMP-RECIP-TEST"
+
+
+def test_engine_get_state_snapshot(initialized_engine):
+    """Engine get_state_snapshot returns latest cached payload or computes a valid nominal step."""
+    # Before stepping, get_state_snapshot() steps automatically
+    snap = initialized_engine.get_state_snapshot()
+    assert isinstance(snap, dict)
+    assert "metadata" in snap
+    assert snap["metadata"]["twin_cycle_index"] == 1
+
+    # After explicit step, get_state_snapshot returns the latest payload
+    step_packet = {
+        "pressure_psi": 118.0,
+        "delta_pressure_dt": 0.0,
+        "motor_current_rms_a": 5.2,
+        "temperature_celsius": 55.0,
+        "vibration_x_rms_ms2": 1.1,
+        "vibration_kurtosis": 3.0,
+        "acoustic_energy_mv": 95.0,
+    }
+    stepped_payload = initialized_engine.step(step_packet)
+    assert stepped_payload["metadata"]["twin_cycle_index"] == 2
+
+    cached_snap = initialized_engine.get_state_snapshot()
+    assert cached_snap["metadata"]["twin_cycle_index"] == 2
+    assert cached_snap["telemetry_snapshot"]["pressure_psi"] == 118.0
+
 

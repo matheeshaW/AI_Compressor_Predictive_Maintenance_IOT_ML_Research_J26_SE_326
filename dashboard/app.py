@@ -52,22 +52,16 @@ st.sidebar.markdown("### 🧩 Intelligence Modules")
 view_selection = st.sidebar.selectbox(
     "Select Component View",
     [
-        "🌐 C03: Industrial Digital Twin (Kahakotuwa)",
-        "🧠 C02: AI Predictive Maintenance & RUL (Herath)",
         "⚡ C01: Edge Sensing & DSP Waveforms (Matheesha)",
+        "🧠 C02: AI Predictive Maintenance & RUL (Herath)",
+        "🌐 C03: Industrial Digital Twin (Kahakotuwa)",
         "🎯 C04: RL Prescriptive Maintenance (Liyanage)"
     ],
     index=0
 )
 
 # Route to selected view
-if "C03" in view_selection:
-    from views.c03_digital_twin_view import render_c03_view
-    render_c03_view()
-elif "C02" in view_selection:
-    from views.c02_predictive_view import render_c02_predictive_view
-    render_c02_predictive_view()
-elif "C01" in view_selection:
+if "C01" in view_selection:
     import pandas as pd
     from views.c01_edge_telemetry_view import render_c01_view
     from utils.telemetry_simulator import CompressorTelemetrySimulator
@@ -75,6 +69,12 @@ elif "C01" in view_selection:
         st.session_state.simulator = CompressorTelemetrySimulator()
     pkt = st.session_state.simulator.step()
     render_c01_view(pkt, pd.DataFrame([pkt]))
+elif "C02" in view_selection:
+    from views.c02_predictive_view import render_c02_predictive_view
+    render_c02_predictive_view()
+elif "C03" in view_selection:
+    from views.c03_digital_twin_view import render_c03_view
+    render_c03_view()
 elif "C04" in view_selection:
     import pandas as pd
     from views.c04_prescriptive_view import render_c04_view
