@@ -39,6 +39,7 @@ bool temp_ready = false;
 MultiModalTelemetry currentFrame;
 float cachedTemperature = 25.0f;
 bool emergencyCutoffLatched = false;
+bool manualEStopActive      = false;
 
 // Non-blocking Timing Trackers
 uint32_t lastFastSampleTime = 0;
@@ -116,22 +117,28 @@ void loop() {
         String cmd = Serial.readStringUntil('\n');
         cmd.trim();
         if (cmd == "CMD:RESET") {
+            manualEStopActive = false;
             emergencyCutoffLatched = false;
             digitalWrite(PIN_RELAY, RELAY_STATE_ARMED);
             digitalWrite(PIN_BUZZER, LOW);
+            edgeDetector.reset();
             featureExtractor.reset();
             Serial.println("[ACK] SAFETY_INTERLOCK_RESET");
             Serial0.println("[ACK] SAFETY_INTERLOCK_RESET");
         } else if (cmd == "CMD:STOP") {
+            manualEStopActive = true;
             emergencyCutoffLatched = true;
             digitalWrite(PIN_RELAY, RELAY_STATE_TRIPPED);
             digitalWrite(PIN_BUZZER, LOW);
             Serial.println("[ACK] MANUAL_ESTOP_TRIPPED");
             Serial0.println("[ACK] MANUAL_ESTOP_TRIPPED");
         } else if (cmd == "CMD:START") {
+            manualEStopActive = false;
             emergencyCutoffLatched = false;
             digitalWrite(PIN_RELAY, RELAY_STATE_ARMED);
             digitalWrite(PIN_BUZZER, LOW);
+            edgeDetector.reset();
+            featureExtractor.reset();
             Serial.println("[ACK] MACHINE_ARMED_STARTED");
             Serial0.println("[ACK] MACHINE_ARMED_STARTED");
         }
@@ -232,20 +239,30 @@ void loop() {
         // 3d. Edge Statistical Anomaly Detection & Fail-Safe Interlock (<50 ms)
         // ---------------------------------------------------------
         AnomalyResult det = edgeDetector.evaluate(dsp, currentFrame.pressure_psi, currentFrame.temperature_c);
-        currentFrame.anomaly_flag  = det.is_anomalous;
-        currentFrame.anomaly_score = det.anomaly_score;
-        currentFrame.fault_cause   = det.fault_cause;
 
-        if (det.trip_relay || currentFrame.pressure_psi >= PRESSURE_SAFETY_LIMIT_PSI) {
-            emergencyCutoffLatched = true;
-            digitalWrite(PIN_RELAY, RELAY_STATE_TRIPPED); // De-energize active-high relay to cut off compressor (<50ms)
-            digitalWrite(PIN_BUZZER, HIGH); // Continuous audible alarm tone
-            currentFrame.anomaly_flag = true;
+        if (manualEStopActive) {
+            // Operator triggered intentional manual E-stop from dashboard
+            currentFrame.anomaly_flag  = false;
+            currentFrame.anomaly_score = 0.0f;
+            currentFrame.fault_cause   = "MANUAL_ESTOP";
+            digitalWrite(PIN_RELAY, RELAY_STATE_TRIPPED);
+            digitalWrite(PIN_BUZZER, LOW); // Buzzer remains silent during intentional operator shutdown
         } else {
-            if (!emergencyCutoffLatched) {
-                // Keep relay armed and buzzer silent under normal operating conditions
-                digitalWrite(PIN_RELAY, RELAY_STATE_ARMED);
-                digitalWrite(PIN_BUZZER, LOW);
+            currentFrame.anomaly_flag  = det.is_anomalous;
+            currentFrame.anomaly_score = det.anomaly_score;
+            currentFrame.fault_cause   = det.fault_cause;
+
+            if (det.trip_relay || currentFrame.pressure_psi >= PRESSURE_SAFETY_LIMIT_PSI) {
+                emergencyCutoffLatched = true;
+                digitalWrite(PIN_RELAY, RELAY_STATE_TRIPPED); // De-energize active-high relay to cut off compressor (<50ms)
+                digitalWrite(PIN_BUZZER, HIGH); // Continuous audible alarm tone for real emergency fault
+                currentFrame.anomaly_flag = true;
+            } else {
+                if (!emergencyCutoffLatched) {
+                    // Keep relay armed and buzzer silent under normal operating conditions
+                    digitalWrite(PIN_RELAY, RELAY_STATE_ARMED);
+                    digitalWrite(PIN_BUZZER, LOW);
+                }
             }
         }
         currentFrame.relay_latched = emergencyCutoffLatched;

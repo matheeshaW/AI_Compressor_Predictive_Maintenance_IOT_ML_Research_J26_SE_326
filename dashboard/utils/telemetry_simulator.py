@@ -42,7 +42,7 @@ class CompressorTelemetrySimulator:
         """Manually trips the relay (E-Stop)."""
         self.relay_state = "TRIPPED_OPEN"
         self.fault_cause = "MANUAL_ESTOP"
-        self.anomaly_score = 0.95
+        self.anomaly_score = 0.0
 
     def reset_interlock(self):
         """Resets emergency interlock and returns machine to nominal armed state."""
@@ -63,10 +63,10 @@ class CompressorTelemetrySimulator:
             motor_current = 0.0
             vibration_rms = 0.02
             vibration_kurtosis = 3.0
-            crest_factor = 2.1
+            crest_factor = 1.0
             acoustic_energy = 15.0
             dp_dt = -0.4
-            anomaly_score = 0.98
+            anomaly_score = 0.0 if self.fault_cause == "MANUAL_ESTOP" else 0.98
             return self._build_packet(t, motor_current, dp_dt, vibration_rms, vibration_kurtosis, crest_factor, acoustic_energy, anomaly_score)
 
         # Active physical dynamics based on regime

@@ -125,6 +125,20 @@ public:
             return res;
         }
 
+        // 2b. Operational Regime Mask: Standby / Idle Machine Detection
+        // If compressor motor is unpowered (current < 0.35A), machine is stopped/idle.
+        // Critical safety limits (P >= 45 PSI, T >= 85 C) are already checked above.
+        // In idle standby, running baseline statistics should not trigger false trips.
+        if (dsp.motor_current_rms < 0.35f) {
+            res.is_anomalous = false;
+            res.anomaly_score = 0.0f;
+            res.mahalanobis_distance = 0.0f;
+            res.trip_relay = false;
+            res.fault_cause = "IDLE_STANDBY";
+            anomaly_persistence_count = 0;
+            return res;
+        }
+
         // 3. Construct live feature vector x with physical bench testbed adaptation
         float x[NUM_FEATURES];
         x[IDX_VIB_RMS]      = dsp.vib_composite_rms;
