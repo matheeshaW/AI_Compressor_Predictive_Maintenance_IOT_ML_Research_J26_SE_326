@@ -1,0 +1,15 @@
+# Component 02: AI-Based Predictive Maintenance & RUL Forecasting
+# Research Dependencies (Python 3.9+)
+
+numpy>=1.22.0
+pandas>=1.4.0
+scipy>=1.8.0
+scikit-learn>=1.1.0
+xgboost>=1.7.0
+torch>=2.0.0
+shap>=0.42.0
+matplotlib>=3.5.0
+seaborn>=0.12.0
+jsonschema>=4.17.0
+requests>=2.28.0
+tqdm>=4.64.0
