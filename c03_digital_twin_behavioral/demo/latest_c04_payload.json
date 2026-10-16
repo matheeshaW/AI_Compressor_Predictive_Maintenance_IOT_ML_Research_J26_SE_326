@@ -1,19 +1,19 @@
 {
-  "timestamp": "2026-10-15T13:35:59Z",
+  "timestamp": "2026-10-16T15:18:40Z",
   "twin_id": "TWIN-COMP-RECIP-01",
   "operating_state": {
-    "cluster_id": 3,
-    "state_label": "ANOMALOUS_LEAK_REGIME",
+    "cluster_id": 4,
+    "state_label": "IDLE_UNLOADED",
     "state_confidence": 1.0
   },
   "behavioral_intelligence": {
-    "deviation_index": 5.2483,
-    "persistence_counter": 20,
-    "drift_detected": true
+    "deviation_index": 0.946,
+    "persistence_counter": 0,
+    "drift_detected": false
   },
   "degradation_metrics": {
-    "composite_degradation_score": 0.4519,
-    "pressure_efficiency_ratio": 0.6,
-    "thermal_dissipation_factor": 0.854
+    "composite_degradation_score": 0.0358,
+    "pressure_efficiency_ratio": 1.0,
+    "thermal_dissipation_factor": 1.634
   }
 }
