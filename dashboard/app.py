@@ -5,7 +5,17 @@ Master Application Coordinator
 """
 
 import os
+import sys
+from pathlib import Path
 import streamlit as st
+
+# Ensure dashboard directory and repo root are on sys.path
+DASHBOARD_DIR = Path(__file__).resolve().parent
+REPO_ROOT = DASHBOARD_DIR.parent
+if str(DASHBOARD_DIR) not in sys.path:
+    sys.path.insert(0, str(DASHBOARD_DIR))
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 # Configure page
 st.set_page_config(
