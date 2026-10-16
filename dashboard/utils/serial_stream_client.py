@@ -74,6 +74,8 @@ class SerialStreamClient:
                 if "features" in data and "edge_status" in data:
                     f = data["features"]
                     s = data["edge_status"]
+                    relay_tripped = bool(s.get("relay_latched", False))
+                    anomaly_flag = bool(s.get("anomaly_flag", False))
                     return {
                         "timestamp_iso": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                         "device_id": data.get("device_id", "ESP32S3-COMP-01"),
@@ -85,10 +87,11 @@ class SerialStreamClient:
                         "vibration_kurtosis": round(f.get("vibration_kurtosis", 3.0), 2),
                         "vibration_crest_factor": round(f.get("vibration_crest_factor", 1.5), 2),
                         "acoustic_energy_mv": round(f.get("acoustic_energy_mv", 0.0), 1),
-                        "relay_state": "TRIPPED_OPEN" if s.get("relay_latched", False) else "ENERGIZED_CLOSED",
+                        "relay_state": "TRIPPED_OPEN" if relay_tripped else "ENERGIZED_CLOSED",
                         "anomaly_score": round(s.get("anomaly_score", 0.0), 3),
                         "fault_cause": s.get("fault_cause", "NORMAL"),
-                        "trip_relay": bool(s.get("relay_latched", False) or s.get("anomaly_flag", False))
+                        "is_anomalous": anomaly_flag,
+                        "trip_relay": relay_tripped
                     }
                 return data
 
@@ -113,12 +116,18 @@ class SerialStreamClient:
                 v_composite = (vib_x**2 + vib_y**2 + vib_z**2)**0.5
                 v_rms_g = v_composite / 9.80665
 
-                # Kurtosis estimate: when anomaly occurs or vibration spikes
-                if anomaly:
-                    kurtosis = 8.8 if sound_mv > 200.0 else 7.6
+                # Hardware relay trip state vs advisory anomaly
+                if relay_latched:
+                    kurtosis = 8.8
                     crest_factor = 6.2
-                    score = 0.94
-                    fault_cause = "CRITICAL_OVERPRESSURE" if press_psi >= 45.0 else ("BEARING_VALVE_KNOCK" if sound_mv > 150.0 else "MULTIMODAL_ANOMALY")
+                    score = 0.98
+                    fault_cause = "CRITICAL_OVERPRESSURE" if press_psi >= 45.0 else ("BEARING_VALVE_KNOCK" if (sound_mv > 150.0 or v_rms_g > 0.8) else "HARDWARE_EMERGENCY_TRIP")
+                elif anomaly:
+                    # Advisory warning condition (machine still running safely with relay armed)
+                    kurtosis = 5.8 if (sound_mv > 200.0 or v_rms_g > 0.6) else 3.8
+                    crest_factor = 4.2 if sound_mv > 200.0 else 2.6
+                    score = 0.55
+                    fault_cause = "ACOUSTIC_ANOMALY" if sound_mv > 300.0 else ("MOTOR_OVERCURRENT" if curr_a > 13.0 else "STATISTICAL_OUTLIER")
                 else:
                     kurtosis = 3.02
                     crest_factor = 2.1
@@ -140,7 +149,8 @@ class SerialStreamClient:
                     "relay_state": "TRIPPED_OPEN" if relay_latched else "ENERGIZED_CLOSED",
                     "anomaly_score": round(score, 3),
                     "fault_cause": fault_cause,
-                    "trip_relay": relay_latched or anomaly
+                    "is_anomalous": anomaly,
+                    "trip_relay": relay_latched
                 }
         except Exception:
             pass

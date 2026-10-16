@@ -172,14 +172,16 @@ history_df = pd.DataFrame(st.session_state.history) if st.session_state.history 
 # ==============================================================================
 # 1. Top Executive Control Bar
 is_tripped = current_packet.get("trip_relay", False) if current_packet else False
+is_anomalous = current_packet.get("is_anomalous", False) if current_packet else False
 render_header(
     is_live_serial=(st.session_state.telemetry_mode == "Live Serial (ESP32-S3)"),
-    is_tripped=is_tripped
+    is_tripped=is_tripped,
+    has_anomaly=is_anomalous
 )
 
 # 2. Safety Interlock Alert Banner
 fault_cause = current_packet.get("fault_cause", "NORMAL") if current_packet else "NORMAL"
-render_alert_banner(is_tripped=is_tripped, fault_cause=fault_cause, latency_us=7.12)
+render_alert_banner(is_tripped=is_tripped, fault_cause=fault_cause, is_anomalous=is_anomalous, latency_us=7.12)
 
 # 3. Component Navigation Tabs
 tab1, tab2, tab3, tab4 = st.tabs([
