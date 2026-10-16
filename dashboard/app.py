@@ -4,11 +4,17 @@ app.py
 ======
 Industrial AI Compressor Intelligence Platform — Next-Gen Unified Dashboard
 SLIIT 4th Year Research Project: J26-SE-326
+Integrates All 4 Research Components:
+- C01: Edge Sensing & DSP Waveforms (Matheesha)
+- C02: AI Predictive Maintenance & RUL (Herath)
+- C03: Industrial Digital Twin & Behavioral Intelligence (Kahakotuwa)
+- C04: RL Prescriptive Maintenance Policies (Liyanage)
 """
 
 import os
 import sys
 import time
+from pathlib import Path
 import pandas as pd
 import streamlit as st
 
@@ -20,10 +26,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Ensure dashboard root is in sys.path
+# Ensure dashboard root and repo root are in sys.path
 DASHBOARD_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.abspath(os.path.join(DASHBOARD_DIR, ".."))
 if DASHBOARD_DIR not in sys.path:
     sys.path.insert(0, DASHBOARD_DIR)
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 
 from utils.telemetry_simulator import CompressorTelemetrySimulator
 from utils.serial_stream_client import SerialStreamClient
@@ -58,7 +67,7 @@ if "telemetry_mode" not in st.session_state:
 # ==============================================================================
 with st.sidebar:
     st.markdown("### 🎛️ Mission Control")
-    st.markdown("Configure operational inputs and trigger physical fault injections for live viva demonstrations.")
+    st.markdown("Configure operational inputs and trigger physical fault injections for live demonstrations.")
 
     # 1. Telemetry Source Toggle
     st.markdown("##### 🔌 Telemetry Source")
@@ -164,6 +173,29 @@ with st.sidebar:
             use_container_width=True
         )
 
+    st.markdown("---")
+
+    # 4. View Presentation Mode & Component Selector
+    st.markdown("##### 🧩 Intelligence Modules View")
+    presentation_mode = st.radio(
+        "Presentation Mode:",
+        ["Unified Multi-Tab (All Components)", "Individual Component Focus"],
+        index=0
+    )
+
+    selected_component = None
+    if presentation_mode == "Individual Component Focus":
+        selected_component = st.selectbox(
+            "Select Component View",
+            [
+                "⚡ C01: Edge Sensing & DSP Waveforms (Matheesha)",
+                "🧠 C02: AI Predictive Maintenance & RUL (Herath)",
+                "🌐 C03: Industrial Digital Twin (Kahakotuwa)",
+                "🎯 C04: RL Prescriptive Maintenance (Liyanage)"
+            ],
+            index=2
+        )
+
 
 # ==============================================================================
 # DATA INGESTION & DISPATCH
@@ -211,28 +243,39 @@ render_header(
 fault_cause = current_packet.get("fault_cause", "NORMAL") if current_packet else "NORMAL"
 render_alert_banner(is_tripped=is_tripped, fault_cause=fault_cause, is_anomalous=is_anomalous, latency_us=7.12)
 
-# 3. Component Navigation Tabs
-tab1, tab2, tab3, tab4 = st.tabs([
-    "📡 C01: Edge Sensing & DSP",
-    "🧠 C02: AI Predictive & RUL",
-    "🧬 C03: Digital Twin Behavioral",
-    "🤖 C04: RL Prescriptive Policies"
-])
+# 3. View Routing (Unified Tabs OR Individual Component Focus)
+if presentation_mode == "Individual Component Focus" and selected_component is not None:
+    if "C01" in selected_component:
+        render_c01_view(current_packet, history_df)
+    elif "C02" in selected_component:
+        render_c02_view(current_packet, history_df)
+    elif "C03" in selected_component:
+        render_c03_view(current_packet, history_df)
+    elif "C04" in selected_component:
+        render_c04_view(current_packet, history_df)
+else:
+    # Component Navigation Tabs (Unified master view combining all research components)
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "📡 C01: Edge Sensing & DSP",
+        "🧠 C02: AI Predictive & RUL",
+        "🧬 C03: Digital Twin Behavioral",
+        "🤖 C04: RL Prescriptive Policies"
+    ])
 
-with tab1:
-    render_c01_view(current_packet, history_df)
+    with tab1:
+        render_c01_view(current_packet, history_df)
 
-with tab2:
-    render_c02_view(current_packet, history_df)
+    with tab2:
+        render_c02_view(current_packet, history_df)
 
-with tab3:
-    render_c03_view(current_packet, history_df)
+    with tab3:
+        render_c03_view(current_packet, history_df)
 
-with tab4:
-    render_c04_view(current_packet, history_df)
+    with tab4:
+        render_c04_view(current_packet, history_df)
+
 
 # Continuous Live Auto-Stream Loop
 if auto_stream and st.session_state.is_running:
     time.sleep(refresh_rate)
     st.rerun()
-

@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-10-16T15:18:40Z",
+  "twin_id": "TWIN-COMP-RECIP-01",
+  "operating_state": {
+    "cluster_id": 4,
+    "state_label": "IDLE_UNLOADED",
+    "state_confidence": 1.0
+  },
+  "behavioral_intelligence": {
+    "deviation_index": 0.946,
+    "persistence_counter": 0,
+    "drift_detected": false
+  },
+  "degradation_metrics": {
+    "composite_degradation_score": 0.0358,
+    "pressure_efficiency_ratio": 1.0,
+    "thermal_dissipation_factor": 1.634
+  }
+}

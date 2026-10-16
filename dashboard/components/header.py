@@ -5,6 +5,7 @@ Global top control and branding header for the Next-Gen Monitoring Dashboard.
 """
 
 import streamlit as st
+import textwrap
 
 
 def clean_html(raw: str) -> str:
