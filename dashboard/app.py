@@ -74,17 +74,36 @@ with st.sidebar:
         selected_port = st.selectbox("Detected USB Serial COM Ports:", ports if ports else ["No Ports Detected"])
         col_c1, col_c2 = st.columns(2)
         with col_c1:
-            if st.button("🔗 Connect", use_container_width=True):
+            if st.button("🔗 Connect", use_container_width=True, disabled=st.session_state.serial_client.is_connected):
                 if ports and selected_port != "No Ports Detected":
+                    st.session_state.serial_client.close()
                     success = st.session_state.serial_client.connect(selected_port)
                     if success:
-                        st.success("Connected to ESP32-S3!")
+                        st.toast(f"Connected to {selected_port}!")
+                        st.rerun()
                     else:
-                        st.error("Failed to connect.")
+                        st.error(f"Cannot open {selected_port}. Close Arduino IDE Serial Monitor first!")
         with col_c2:
-            if st.button("🔌 Disconnect", use_container_width=True):
+            if st.button("🔌 Disconnect", use_container_width=True, disabled=not st.session_state.serial_client.is_connected):
                 st.session_state.serial_client.close()
-                st.info("Port closed.")
+                st.toast("Serial port closed.")
+                st.rerun()
+
+        if st.session_state.serial_client.is_connected:
+            st.markdown(
+                f"""<div style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10B981; border-radius: 8px; padding: 0.45rem 0.75rem; margin-top: 0.5rem; text-align: center;">
+                    <span style="color: #10B981; font-weight: 700; font-size: 0.85rem;">🟢 ONLINE: {st.session_state.serial_client.port}</span><br>
+                    <span style="color: #94A3B8; font-size: 0.72rem; font-family: monospace;">115200 Baud | Zero-Lag Telemetry</span>
+                </div>""",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                """<div style="background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 0.45rem 0.75rem; margin-top: 0.5rem; text-align: center;">
+                    <span style="color: #94A3B8; font-weight: 600; font-size: 0.8rem;">⚪ PORT DISCONNECTED</span>
+                </div>""",
+                unsafe_allow_html=True
+            )
 
     st.markdown("---")
 
@@ -120,7 +139,7 @@ with st.sidebar:
     # 3. Stream Controls & CSV Export
     st.markdown("##### ⏯️ Stream Playback")
     auto_stream = st.checkbox("⚡ Auto-Stream Telemetry", value=True)
-    refresh_rate = st.slider("Stream Interval (sec)", min_value=0.2, max_value=2.0, value=0.5, step=0.1)
+    refresh_rate = st.slider("Stream Interval (sec)", min_value=0.1, max_value=2.0, value=0.2, step=0.1)
 
     p_col1, p_col2 = st.columns(2)
     with p_col1:
@@ -154,6 +173,8 @@ if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_st
     if raw_packet:
         current_packet = raw_packet
         current_packet["step"] = len(st.session_state.history) + 1
+    elif st.session_state.history:
+        current_packet = st.session_state.history[-1]
 else:
     # Use deterministic physical simulator
     current_packet = st.session_state.simulator.step()
