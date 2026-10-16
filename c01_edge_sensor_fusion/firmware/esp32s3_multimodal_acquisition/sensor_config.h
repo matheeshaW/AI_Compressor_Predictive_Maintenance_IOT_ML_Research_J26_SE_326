@@ -8,6 +8,8 @@
 // ====================================================================
 #define PIN_DS18B20      4    // Hole 18A: DS18B20 1-Wire Digital Temperature
 #define PIN_RELAY        5    // Hole 17A: 5V Optocoupler Fail-Safe Relay
+#define RELAY_STATE_ARMED   HIGH // Active-HIGH: Energizes relay coil, closing COM to NO (compressor armed)
+#define RELAY_STATE_TRIPPED LOW  // De-energizes relay coil, opening COM from NO (compressor cut off)
 #define PIN_BUZZER       6    // Hole 16A: Active Piezo Warning Alarm Buzzer
 #define PIN_LED_GREEN    7    // Hole 15A: Heartbeat & Status Green LED
 #define PIN_I2C_SDA      8    // Hole 10A: Shared I2C Data (SDA)
