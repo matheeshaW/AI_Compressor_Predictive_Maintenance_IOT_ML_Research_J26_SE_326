@@ -148,8 +148,8 @@ void loop() {
             Serial0.printf("[ACK] PRESSURE_SENSOR_TARED offset=%.3fV\n", pressureZeroOffsetV);
         } else if (cmd == "CMD:RESET_CAL_P") {
             pressureZeroOffsetV = PRESSURE_ZERO_OFFSET_V;
-            Serial.println("[ACK] PRESSURE_CAL_RESET");
-            Serial0.println("[ACK] PRESSURE_CAL_RESET");
+            Serial.printf("[ACK] PRESSURE_CAL_RESET default=%.3fV\n", pressureZeroOffsetV);
+            Serial0.printf("[ACK] PRESSURE_CAL_RESET default=%.3fV\n", pressureZeroOffsetV);
         }
     }
 
