@@ -40,9 +40,11 @@
 // TRANSDUCER CALIBRATION & PHYSICAL CONSTANTS
 // ====================================================================
 // G1/4 Pressure Transducer (0 - 0.5 MPa / 0 - 72.52 PSI)
-// 3.3V ratiometric excitation: atmospheric baseline ~0.330V, span ~2.64V
-#define PRESSURE_ZERO_OFFSET_V    0.330f
-#define PRESSURE_SPAN_VOLTS       2.640f
+// Standard 5V ratiometric transducer (10% to 90% of Vcc):
+// - 5.0V rail excitation: atmospheric baseline ~0.500V (10% Vcc), span ~4.000V (0.500V - 4.500V)
+// - (Note: If operated on 3.3V rail, baseline was ~0.330V and span was ~2.640V)
+#define PRESSURE_ZERO_OFFSET_V    0.500f
+#define PRESSURE_SPAN_VOLTS       4.000f
 #define PRESSURE_MAX_PSI          72.52f
 #define PRESSURE_SAFETY_LIMIT_PSI 45.00f // Automated emergency trip threshold
 

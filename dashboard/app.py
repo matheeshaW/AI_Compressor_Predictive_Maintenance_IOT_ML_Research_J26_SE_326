@@ -152,22 +152,34 @@ with st.sidebar:
         st.rerun()
 
     cal_col1, cal_col2 = st.columns([1.6, 1])
+    is_live = (st.session_state.telemetry_mode == "Live Serial (ESP32-S3)")
     with cal_col1:
-        tare_p = st.session_state.get("pressure_tare_psi", 0.0)
-        btn_txt = "🎯 Zero Pressure (0 PSI)" if tare_p == 0.0 else f"🎯 Tared (-{tare_p:.1f} PSI)"
+        tare_active = st.session_state.get("pressure_tared", False)
+        tare_offset = st.session_state.get("pressure_tare_psi", 0.0)
+        if is_live:
+            btn_txt = "🎯 Zero Pressure (0 PSI)" if not tare_active else "🎯 Zeroed (Hardware Calibrated)"
+        else:
+            btn_txt = "🎯 Zero Pressure (0 PSI)" if tare_offset == 0.0 else f"🎯 Tared (-{tare_offset:.1f} PSI)"
+
         if st.button(btn_txt, use_container_width=True, help="Tare pressure sensor offset to 0.0 PSI in open air"):
-            curr_raw = st.session_state.get("last_raw_pressure", 4.70)
-            st.session_state["pressure_tare_psi"] = curr_raw
-            if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
+            st.session_state["pressure_tared"] = True
+            if is_live and st.session_state.serial_client.is_connected:
                 st.session_state.serial_client.send_command("CMD:TARE_P")
-            st.toast(f"Pressure sensor tared to 0.0 PSI (offset: -{curr_raw:.2f} PSI)")
+                st.toast("ESP32-S3: Transducer zeroed to 0.0 PSI baseline on-chip")
+            else:
+                curr_raw = st.session_state.get("last_raw_pressure", 4.70)
+                st.session_state["pressure_tare_psi"] = curr_raw
+                st.toast(f"Simulator: Pressure zeroed (offset: -{curr_raw:.2f} PSI)")
             st.rerun()
     with cal_col2:
         if st.button("↺ Reset Tare", use_container_width=True, help="Revert pressure calibration to factory offset"):
+            st.session_state["pressure_tared"] = False
             st.session_state["pressure_tare_psi"] = 0.0
-            if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
+            if is_live and st.session_state.serial_client.is_connected:
                 st.session_state.serial_client.send_command("CMD:RESET_CAL_P")
-            st.toast("Pressure calibration reset to factory default")
+                st.toast("ESP32-S3: Pressure calibration reset to 5V factory default (0.500V)")
+            else:
+                st.toast("Simulator: Pressure calibration reset to factory default")
             st.rerun()
 
     st.markdown("---")
@@ -277,10 +289,13 @@ else:
 if current_packet:
     # Retain raw uncalibrated pressure for taring calculations
     st.session_state["last_raw_pressure"] = current_packet.get("pressure_psi", 0.0)
-    tare_offset = st.session_state.get("pressure_tare_psi", 0.0)
-    if tare_offset > 0.0 and "pressure_psi" in current_packet:
-        current_packet["raw_pressure_psi"] = current_packet["pressure_psi"]
-        current_packet["pressure_psi"] = max(0.0, round(current_packet["pressure_psi"] - tare_offset, 2))
+    # In Live Serial mode, the ESP32-S3 firmware zeroes pressureZeroOffsetV directly on-chip.
+    # Software tare subtraction is strictly for synthetic simulation mode to prevent double-subtraction.
+    if st.session_state.telemetry_mode != "Live Serial (ESP32-S3)":
+        tare_offset = st.session_state.get("pressure_tare_psi", 0.0)
+        if tare_offset > 0.0 and "pressure_psi" in current_packet:
+            current_packet["raw_pressure_psi"] = current_packet["pressure_psi"]
+            current_packet["pressure_psi"] = max(0.0, round(current_packet["pressure_psi"] - tare_offset, 2))
 
     st.session_state.history.append(current_packet)
     # Keep last 50 samples for rolling buffer
