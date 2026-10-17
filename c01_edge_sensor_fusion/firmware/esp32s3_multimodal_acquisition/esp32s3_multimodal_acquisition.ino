@@ -40,6 +40,7 @@ MultiModalTelemetry currentFrame;
 float cachedTemperature = 25.0f;
 bool emergencyCutoffLatched = false;
 bool manualEStopActive      = false;
+float pressureZeroOffsetV   = PRESSURE_ZERO_OFFSET_V;
 
 // Non-blocking Timing Trackers
 uint32_t lastFastSampleTime = 0;
@@ -141,6 +142,14 @@ void loop() {
             featureExtractor.reset();
             Serial.println("[ACK] MACHINE_ARMED_STARTED");
             Serial0.println("[ACK] MACHINE_ARMED_STARTED");
+        } else if (cmd == "CMD:TARE_P" || cmd == "CMD:CAL_PRESSURE") {
+            pressureZeroOffsetV = currentFrame.pressure_volts;
+            Serial.printf("[ACK] PRESSURE_SENSOR_TARED offset=%.3fV\n", pressureZeroOffsetV);
+            Serial0.printf("[ACK] PRESSURE_SENSOR_TARED offset=%.3fV\n", pressureZeroOffsetV);
+        } else if (cmd == "CMD:RESET_CAL_P") {
+            pressureZeroOffsetV = PRESSURE_ZERO_OFFSET_V;
+            Serial.println("[ACK] PRESSURE_CAL_RESET");
+            Serial0.println("[ACK] PRESSURE_CAL_RESET");
         }
     }
 
@@ -194,8 +203,8 @@ void loop() {
             // Channel A0: G1/4 Pressure Transducer
             int16_t rawP = ads.readADC_SingleEnded(ADC_CH_PRESSURE);
             currentFrame.pressure_volts = ads.computeVolts(rawP);
-            if (currentFrame.pressure_volts >= 0.30f) {
-                currentFrame.pressure_psi = ((currentFrame.pressure_volts - PRESSURE_ZERO_OFFSET_V) / PRESSURE_SPAN_VOLTS) * PRESSURE_MAX_PSI;
+            if (currentFrame.pressure_volts >= (pressureZeroOffsetV - 0.05f)) {
+                currentFrame.pressure_psi = ((currentFrame.pressure_volts - pressureZeroOffsetV) / PRESSURE_SPAN_VOLTS) * PRESSURE_MAX_PSI;
                 if (currentFrame.pressure_psi < 0.0f) currentFrame.pressure_psi = 0.0f;
             } else {
                 currentFrame.pressure_psi = 0.0f;

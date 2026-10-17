@@ -17,19 +17,38 @@ from components.metric_card import render_metric_card
 def render_c01_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
     """Renders the comprehensive Component 01 Edge Telemetry & DSP dashboard view."""
     
-    st.markdown("### 📡 Component 01: Multi-Modal Edge Sensing & Real-Time DSP Telemetry")
-    st.markdown(
-        "*Real-time embedded telemetry acquired via dual-rate DMA on ESP32-S3 (Xtensa LX7 @ 240 MHz). "
-        "Evaluates sliding-window DSP features and executes sub-50ms relay emergency cutoffs.*"
-    )
+    hdr_c1, hdr_c2 = st.columns([3.5, 1.5])
+    with hdr_c1:
+        st.markdown("### 📡 Component 01: Multi-Modal Edge Sensing & Real-Time DSP Telemetry")
+        st.markdown(
+            "*Real-time embedded telemetry acquired via dual-rate DMA on ESP32-S3 (Xtensa LX7 @ 240 MHz). "
+            "Evaluates sliding-window DSP features and executes sub-50ms relay emergency cutoffs.*"
+        )
+    with hdr_c2:
+        tare_p = st.session_state.get("pressure_tare_psi", 0.0)
+        btn_txt = "🎯 Tare Pressure (0 PSI)" if tare_p == 0.0 else f"↺ Reset Tare ({tare_p:.1f} PSI)"
+        if st.button(btn_txt, key="btn_tare_c01", use_container_width=True, help="Tare pressure sensor offset to 0.0 PSI in open air"):
+            if tare_p == 0.0:
+                raw_val = current_packet.get("raw_pressure_psi", current_packet.get("pressure_psi", 4.70))
+                st.session_state["pressure_tare_psi"] = raw_val
+                if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
+                    st.session_state.serial_client.send_command("CMD:TARE_P")
+                st.toast(f"Pressure sensor tared to 0.0 PSI (offset: -{raw_val:.2f} PSI)")
+            else:
+                st.session_state["pressure_tare_psi"] = 0.0
+                if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
+                    st.session_state.serial_client.send_command("CMD:RESET_CAL_P")
+                st.toast("Pressure calibration reset to factory default")
+            st.rerun()
 
     # 1. Top KPI Metric Cards (5 Primary Sensing Modalities)
     col1, col2, col3, col4, col5 = st.columns(5)
     
     p = current_packet.get("pressure_psi", 0.0)
     p_status = "danger" if p >= 45.0 else ("warning" if p >= 38.0 else "normal")
+    sub_label = f"Tared: -{tare_p:.1f} PSI" if tare_p > 0.0 else f"Rate: {current_packet.get('pressure_rate_of_change_psi_sec', 0.0):+.2f} PSI/s"
     with col1:
-        render_metric_card("Discharge Pressure", f"{p:.1f}", "PSI", f"Rate: {current_packet.get('pressure_rate_of_change_psi_sec', 0.0):+.2f} PSI/s", p_status)
+        render_metric_card("Discharge Pressure", f"{p:.1f}", "PSI", sub_label, p_status)
 
     curr = current_packet.get("motor_current_rms_amps", 0.0)
     c_status = "danger" if curr >= 15.0 else ("warning" if curr >= 11.0 else "normal")

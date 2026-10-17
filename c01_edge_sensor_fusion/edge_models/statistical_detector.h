@@ -146,10 +146,10 @@ public:
         x[IDX_CREST_FACTOR] = dsp.vib_x_crest_factor;
         // Open-air bench adaptation: If manifold is open to atmosphere (< 5.0 PSI), use baseline to prevent false 50-sigma trip
         x[IDX_PRESSURE]     = (current_pressure < 5.0f) ? feature_means[IDX_PRESSURE] : current_pressure;
-        // 12V 150 PSI compressor draws 8A-12A nominal; if in normal running envelope, use calibrated baseline
+        // 12V 150 PSI compressor draws 5A-12A nominal; if in normal running envelope, use calibrated baseline
         x[IDX_CURRENT_RMS]  = (dsp.motor_current_rms > 0.5f && dsp.motor_current_rms < 14.0f) ? feature_means[IDX_CURRENT_RMS] : dsp.motor_current_rms;
-        // Running compressor acoustic noise on bench is 150-400 mV; clatter above 450 mV indicates anomaly
-        x[IDX_ACOUSTIC_RMS] = (dsp.acoustic_energy_mv < 450.0f) ? feature_means[IDX_ACOUSTIC_RMS] : dsp.acoustic_energy_mv;
+        // At 5 cm distance, running compressor emits 550-850 mV peak-to-peak normal sound; clatter/blowout above 1000 mV indicates anomaly
+        x[IDX_ACOUSTIC_RMS] = (dsp.acoustic_energy_mv < 1000.0f) ? feature_means[IDX_ACOUSTIC_RMS] : dsp.acoustic_energy_mv;
 
         // 4. Compute weighted Euclidean / diagonal Mahalanobis distance D_M
         // D_M = sqrt( sum( (x_i - mu_i)^2 / sigma_i^2 ) )
