@@ -282,7 +282,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     # ==============================================================================
     is_scenario_injected = "c03_active_scenario" in st.session_state and st.session_state.c03_active_scenario
 
-    with st.expander("🎮 Live Interactive Viva Perturbation Rig & DSR Hypothesis Testing", expanded=True):
+    with st.expander("🎮 Live Operational Fault Injection & Scenario Testing Rig", expanded=True):
         st.markdown(
             "Inject calibrated operational perturbations directly into the Digital Twin to evaluate dynamic state discovery, "
             "subsystem degradation tracking, and **transient noise rejection vs. persistent drift declaration**:"
@@ -652,22 +652,22 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         st.plotly_chart(fig_drift, use_container_width=True)
 
     # ==============================================================================
-    # 6. DOWNSTREAM C04 RL PAYLOAD & DSR VIVA DEFENSE SUMMARY
+    # 6. DOWNSTREAM C04 RL PAYLOAD & TWIN ENGINE SPECIFICATIONS
     # ==============================================================================
     v_col1, v_col2 = st.columns([1.2, 1])
 
     with v_col1:
-        with st.expander("🤖 Downstream C04 Prescriptive Maintenance RL Payload Contract", expanded=False):
+        with st.expander("🔌 Downstream RL Integration Contract (C03 → C04 Interface)", expanded=False):
             st.json(latest_payload.get("downstream_contract_payload", {}))
 
     with v_col2:
-        with st.expander("📚 Academic DSR Viva Defense Matrix", expanded=False):
+        with st.expander("📊 Digital Twin Benchmark & Engine Specifications", expanded=False):
             st.markdown("""
-            **Component 03 Research Benchmark Summary:**
-            - **Resampling:** Uniform 25 Hz central difference aligner (40 ms time budget).
-            - **Separability:** Silhouette = **0.742**, Davies-Bouldin = **0.481**, Calinski-Harabasz = **1,482.6**.
-            - **Noise Immunity:** 5-window persistence filter achieves **96.4% transient false alarm rejection**.
-            - **Inference Latency:** **3.82 ms** on standard CPU (10.5x margin within 25 Hz loop).
+            **Component 03 Performance & Validation Metrics:**
+            - **Temporal Synchronization:** Uniform 25 Hz deterministic aligner (40 ms cycle budget).
+            - **Cluster Separability:** Silhouette = **0.742**, Davies-Bouldin = **0.481**, Calinski-Harabasz = **1,482.6**.
+            - **Transient Immunity:** 5-window persistence filter achieves **96.4% transient noise rejection**.
+            - **Inference Latency:** **3.82 ms** average execution cycle on CPU (10.5x margin within 25 Hz loop).
             """)
 
 
