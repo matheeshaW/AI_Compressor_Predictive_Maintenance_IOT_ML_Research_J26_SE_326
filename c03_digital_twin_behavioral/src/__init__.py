@@ -1,8 +1,5 @@
 """
-c03_digital_twin_behavioral/src/__init__.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Research Project: J26-SE-326 (SLIIT AIMS Cluster)
-Researcher: Kahakotuwa K.N (IT23432284)
+Digital twin and behavioral intelligence package for industrial air compressors.
 """
 
 from .twin_engine import IndustrialDigitalTwinEngine

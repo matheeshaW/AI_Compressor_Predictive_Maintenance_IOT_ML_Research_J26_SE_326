@@ -1,8 +1,5 @@
 """
-tests/test_evaluation_pipeline.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Unit tests for the quantitative clustering evaluation and temporal stability pipeline.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+Unit tests for the clustering evaluation and temporal stability pipeline.
 """
 
 from pathlib import Path

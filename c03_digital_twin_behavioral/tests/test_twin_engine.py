@@ -1,9 +1,5 @@
-
 """
-tests/test_twin_engine.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Comprehensive Integration and End-to-End Orchestration Test Suite
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+Integration and end-to-end orchestration tests for IndustrialDigitalTwinEngine.
 """
 
 import json

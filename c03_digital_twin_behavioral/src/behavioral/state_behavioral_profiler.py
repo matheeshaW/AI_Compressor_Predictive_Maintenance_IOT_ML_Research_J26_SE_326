@@ -1,8 +1,5 @@
 """
-src/behavioral/state_behavioral_profiler.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-State-conditioned statistical envelope profiling and Mahalanobis distance estimation.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+State-conditioned statistical envelope profiling and regularized Mahalanobis distance estimation.
 """
 
 from dataclasses import dataclass, field

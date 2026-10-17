@@ -1,8 +1,6 @@
 """
-src/sync/stream_buffer.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-High-performance thread-safe circular ring buffer for asynchronous multi-modal telemetry.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+Thread-safe circular ring buffer for incoming telemetry packets.
+Maintains chronological order and handles jitter / duplicate frames.
 """
 
 from dataclasses import dataclass, field

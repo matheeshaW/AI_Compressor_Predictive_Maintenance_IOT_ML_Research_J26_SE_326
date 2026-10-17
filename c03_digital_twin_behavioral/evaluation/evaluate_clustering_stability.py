@@ -1,9 +1,6 @@
 """
-evaluation/evaluate_clustering_stability.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Quantitative clustering benchmarking, state transition stability,
+Clustering stability benchmark, Markov state transition modeling,
 and temporal degradation drift evaluation.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
 """
 
 from pathlib import Path

@@ -1,9 +1,6 @@
 """
-dashboard/views/c03_digital_twin_view.py
-========================================
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Lead Researcher: Kahakotuwa K.N (IT23432284) - Project J26-SE-326
-Design Science Research (DSR) Unified Platform View & Controller
+Component 03: Industrial Digital Twin & Behavioral Intelligence View.
+Real-time operational states, polar radar envelope, and subsystem health indicators.
 """
 
 import sys
@@ -42,7 +39,7 @@ class DigitalTwinViewController:
     Decoupled from Streamlit UI rendering to facilitate automated unit testing and headless validation.
     """
 
-    # Pre-calibrated physical testbed perturbation presets for interactive viva defense
+    # Pre-calibrated perturbation presets for testing operational regimes
     VIVA_SCENARIOS = {
         "NOMINAL_LOADED": {
             "name": "🟢 Nominal Pressurizing (75 PSI)",
@@ -107,7 +104,7 @@ class DigitalTwinViewController:
                 "vibration_kurtosis": 3.2,
                 "acoustic_energy_mv": 260.0,
             },
-            "description": "Instantaneous line noise artifact. Demonstrates DSR hypothesis: transient noise is rejected without tripping alarm.",
+            "description": "Single-frame line noise artifact to verify that the persistence filter rejects momentary shock without false alarms.",
         },
         "BLOWDOWN_VENT": {
             "name": "🛑 Purge Valve Blowdown Discharge",

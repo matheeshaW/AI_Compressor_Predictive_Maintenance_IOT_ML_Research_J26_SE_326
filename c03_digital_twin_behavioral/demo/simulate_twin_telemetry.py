@@ -1,9 +1,5 @@
 """
-demo/simulate_twin_telemetry.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Live Streaming Replay Simulation & Digital Twin Telemetry Monitor
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
-Design Science Research (DSR) Artifact Demonstration
+Simulation CLI: Replays multi-regime compressor telemetry and monitors digital twin states in real time.
 """
 
 import sys
@@ -133,8 +129,7 @@ def run_live_simulation(
     """
     print("\n" + "=" * 96)
     print("  INDUSTRIAL AIR COMPRESSOR DIGITAL TWIN & BEHAVIORAL INTELLIGENCE ENGINE (C03)")
-    print("  Researcher: Kahakotuwa K.N (IT23432284) | Project: J26-SE-326 | SLIIT AIMS Cluster")
-    print("  Design Science Research (DSR) Real-Time Telemetry Simulation & State Tracking")
+    print("  Live Telemetry Replay Simulation & Operating State Monitor")
     print("=" * 96)
 
     # 1. Initialize Twin Engine with Baseline Data

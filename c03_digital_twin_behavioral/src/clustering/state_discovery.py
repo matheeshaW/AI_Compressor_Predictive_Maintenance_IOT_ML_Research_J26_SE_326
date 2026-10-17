@@ -1,8 +1,6 @@
 """
-src/clustering/state_discovery.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Unsupervised operational state discovery, clustering, and semantic regime mapping.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+Operational state discovery using unsupervised clustering (GMM and K-Means)
+and semantic mapping of compressor operating regimes.
 """
 
 from dataclasses import dataclass, field

@@ -1,8 +1,5 @@
 """
-src/sync/time_series_aligner.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Multi-rate time-series temporal alignment, resampling, interpolation, and feature windowing.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+Multi-rate time-series temporal alignment and linear resampling onto a uniform 25 Hz grid.
 """
 
 from dataclasses import dataclass

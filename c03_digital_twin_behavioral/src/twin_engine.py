@@ -1,9 +1,6 @@
 """
-src/twin_engine.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Master Digital Twin Orchestrator uniting stream buffer, time-series alignment,
-unsupervised state discovery, state-conditioned profiling, and degradation tracking.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+Digital twin engine orchestrating telemetry synchronization, operational state clustering,
+behavioral anomaly profiling, and subsystem health decomposition.
 """
 
 from datetime import datetime, timezone
