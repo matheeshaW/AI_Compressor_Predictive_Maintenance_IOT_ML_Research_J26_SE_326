@@ -209,10 +209,10 @@ class SerialStreamClient:
                 # Fault classification and severity score
                 if relay_latched:
                     score = 0.98
-                    fault_cause = "CRITICAL_OVERPRESSURE" if press_psi >= 45.0 else ("BEARING_VALVE_KNOCK" if (kurtosis >= 7.5 or sound_mv > 450.0) else "HARDWARE_EMERGENCY_TRIP")
+                    fault_cause = "CRITICAL_OVERPRESSURE" if press_psi >= 45.0 else ("BEARING_VALVE_KNOCK" if (kurtosis >= 7.5 or sound_mv > 1000.0) else "HARDWARE_EMERGENCY_TRIP")
                 elif anomaly:
                     score = 0.55
-                    fault_cause = "BEARING_VALVE_KNOCK" if kurtosis >= 7.0 else ("ACOUSTIC_ANOMALY" if sound_mv > 300.0 else ("MOTOR_OVERCURRENT" if curr_a > 13.0 else "STATISTICAL_OUTLIER"))
+                    fault_cause = "BEARING_VALVE_KNOCK" if kurtosis >= 7.0 else ("ACOUSTIC_ANOMALY" if sound_mv > 1000.0 else ("MOTOR_OVERCURRENT" if curr_a > 13.0 else "STATISTICAL_OUTLIER"))
                 else:
                     score = 0.08
                     fault_cause = "NORMAL"
