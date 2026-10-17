@@ -1,0 +1,4 @@
+Policy,Episodes Evaluated,Total Maintenance Cost ($),Mean Maintenance Cost ($),Std Maintenance Cost ($),Cumulative Downtime Hours (h),Mean Downtime Hours (h),Std Downtime Hours (h),Catastrophic Failure Prevention Rate (%),Total Catastrophic Failures,Mean Cumulative Reward,Evaluation Time (s)
+RunToFailurePolicy,500,12444400.00,24888.80,8262.94,61744.00,123.49,40.96,1.40,963,31950.00,15.25
+PeriodicMaintenancePolicy,500,8405400.00,16810.80,4612.08,41904.00,83.81,22.59,77.20,123,40536.69,15.82
+DQNAgent,500,7078800.00,14157.60,4621.72,35274.00,70.55,22.59,79.60,120,43576.17,37.79
