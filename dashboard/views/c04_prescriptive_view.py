@@ -20,6 +20,7 @@ import sys
 import numpy as np
 import pandas as pd
 import streamlit as st
+import textwrap
 import plotly.graph_objects as go
 from typing import Dict, Any, Optional, Tuple
 
@@ -244,7 +245,7 @@ def render_c04_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
     # ==========================================================================
     # 1. ACTION RECOMMENDATION HERO CARD
     # ==========================================================================
-    st.markdown(f"""
+    st.markdown(textwrap.dedent(f"""
     <div style="
         background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.88) 100%);
         border: 2px solid {act_meta['color']};
@@ -283,7 +284,7 @@ def render_c04_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
             <span>State Value Q*(s, a): <b style="color: #34D399;">{q_dict[best_action]:+,.1f}</b></span>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """), unsafe_allow_html=True)
 
     # ==========================================================================
     # 2. Q-VALUE DISTRIBUTION & LIVE DECISION CONFIDENCE
@@ -318,7 +319,7 @@ def render_c04_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
             xaxis=dict(title="Expected Return Q(s, a)", gridcolor="rgba(255, 255, 255, 0.06)"),
             yaxis=dict(autorange="reversed")
         )
-        st.plotly_chart(fig_q, use_container_width=True)
+        st.plotly_chart(fig_q, width='stretch')
 
     with col_q2:
         st.markdown("##### 📈 Real-Time Prescriptive Recommendation Feed")
@@ -347,7 +348,7 @@ def render_c04_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
             st.dataframe(
                 feed_df,
                 hide_index=True,
-                use_container_width=True,
+                width='stretch',
                 height=250,
             )
         else:
@@ -443,14 +444,14 @@ def render_c04_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
             yaxis=dict(title="Cumulative Cost ($)", gridcolor="rgba(255, 255, 255, 0.06)"),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
-        st.plotly_chart(fig_roi, use_container_width=True)
+        st.plotly_chart(fig_roi, width='stretch')
 
     with roi_col2:
         st.markdown("##### 💎 Net Financial Savings & Payback")
         cum_savings_vs_pm = (cost_pm_proj[-1] - cost_dqn_proj[-1])
         cum_savings_vs_rtf = (cost_rtf_proj[-1] - cost_dqn_proj[-1])
 
-        st.markdown(f"""
+        st.markdown(textwrap.dedent(f"""
         <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 1.1rem; height: 280px;">
             <div style="color: #94A3B8; font-size: 0.85rem; font-weight: 600;">3-YEAR PROJECTED NET ROI SAVINGS</div>
             <div style="font-size: 1.8rem; font-weight: 800; color: #10B981; margin: 0.4rem 0;">
@@ -468,7 +469,7 @@ def render_c04_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
                 Preserves factory asset lifecycle while ensuring <b>79.6%</b> catastrophic failure prevention.
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -490,18 +491,18 @@ def render_c04_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
 
     with tab_p1:
         if os.path.exists(p1_file):
-            st.image(p1_file, use_container_width=True, caption="Multi-Objective Trade-Off & Pareto Optimality: DQN vs PM vs RTF over 500 episodes.")
+            st.image(p1_file, width='stretch', caption="Multi-Objective Trade-Off & Pareto Optimality: DQN vs PM vs RTF over 500 episodes.")
         else:
             st.warning("Cost vs Downtime plot not found. Run generate_plots.py to create artifacts.")
 
     with tab_p2:
         if os.path.exists(p2_file):
-            st.image(p2_file, use_container_width=True, caption="Cumulative Operational Return Progression across 500 independent evaluation trials.")
+            st.image(p2_file, width='stretch', caption="Cumulative Operational Return Progression across 500 independent evaluation trials.")
         else:
             st.warning("Cumulative Reward plot not found. Run generate_plots.py to create artifacts.")
 
     with tab_p3:
         if os.path.exists(p3_file):
-            st.image(p3_file, use_container_width=True, caption="Micro-level degradation index D_t and discrete action triggers under identical physical wear dynamics.")
+            st.image(p3_file, width='stretch', caption="Micro-level degradation index D_t and discrete action triggers under identical physical wear dynamics.")
         else:
             st.warning("Policy Decision Trajectory plot not found. Run generate_plots.py to create artifacts.")

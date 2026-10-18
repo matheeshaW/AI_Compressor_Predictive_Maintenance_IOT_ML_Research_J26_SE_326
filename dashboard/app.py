@@ -9,6 +9,7 @@ SLIIT 4th Year Research Project: J26-SE-326
 import os
 import sys
 import time
+import textwrap
 import pandas as pd
 import streamlit as st
 
@@ -38,7 +39,7 @@ from views.c04_prescriptive_view import render_c04_view
 THEME_CSS_PATH = os.path.join(DASHBOARD_DIR, "styles", "theme.css")
 if os.path.exists(THEME_CSS_PATH):
     with open(THEME_CSS_PATH, "r", encoding="utf-8") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+        st.markdown(textwrap.dedent(f"<style>{f.read()}</style>"), unsafe_allow_html=True)
 
 # Initialize Session State
 if "simulator" not in st.session_state:
@@ -74,7 +75,7 @@ with st.sidebar:
         selected_port = st.selectbox("Detected USB Serial COM Ports:", ports if ports else ["No Ports Detected"])
         col_c1, col_c2 = st.columns(2)
         with col_c1:
-            if st.button("🔗 Connect", use_container_width=True):
+            if st.button("🔗 Connect", width='stretch'):
                 if ports and selected_port != "No Ports Detected":
                     success = st.session_state.serial_client.connect(selected_port)
                     if success:
@@ -82,7 +83,7 @@ with st.sidebar:
                     else:
                         st.error("Failed to connect.")
         with col_c2:
-            if st.button("🔌 Disconnect", use_container_width=True):
+            if st.button("🔌 Disconnect", width='stretch'):
                 st.session_state.serial_client.close()
                 st.info("Port closed.")
 
@@ -94,24 +95,24 @@ with st.sidebar:
 
     f_col1, f_col2 = st.columns(2)
     with f_col1:
-        if st.button("🟢 Nominal Run", use_container_width=True):
+        if st.button("🟢 Nominal Run", width='stretch'):
             st.session_state.simulator.set_fault_regime("NOMINAL")
             st.toast("Operating regime set to NOMINAL")
 
-        if st.button("💨 Air Leak Fault", use_container_width=True):
+        if st.button("💨 Air Leak Fault", width='stretch'):
             st.session_state.simulator.set_fault_regime("AIR_LEAK")
             st.toast("Injected Pneumatic Air Leak!")
 
     with f_col2:
-        if st.button("🔨 Bearing Knock", use_container_width=True):
+        if st.button("🔨 Bearing Knock", width='stretch'):
             st.session_state.simulator.set_fault_regime("BEARING_VALVE_KNOCK")
             st.toast("Injected Mechanical Bearing Knock!")
 
-        if st.button("🚨 Overpressure", use_container_width=True):
+        if st.button("🚨 Overpressure", width='stretch'):
             st.session_state.simulator.set_fault_regime("CRITICAL_OVERPRESSURE")
             st.toast("Injected Pressure Ramp -> Overpressure Cutoff!")
 
-    if st.button("🔥 Thermal Overheat", use_container_width=True):
+    if st.button("🔥 Thermal Overheat", width='stretch'):
         st.session_state.simulator.set_fault_regime("THERMAL_OVERHEAT")
         st.toast("Injected Thermal Overheating!")
 
@@ -121,10 +122,10 @@ with st.sidebar:
     st.markdown("##### ⏯️ Stream Playback")
     p_col1, p_col2 = st.columns(2)
     with p_col1:
-        if st.button("▶️ Step / Tick", use_container_width=True):
+        if st.button("▶️ Step / Tick", width='stretch'):
             pass
     with p_col2:
-        if st.button("🧹 Clear Logs", use_container_width=True):
+        if st.button("🧹 Clear Logs", width='stretch'):
             st.session_state.history = []
             st.session_state.simulator = CompressorTelemetrySimulator()
             st.rerun()
@@ -138,7 +139,7 @@ with st.sidebar:
             data=csv_data,
             file_name=f"compressor_telemetry_session_{int(time.time())}.csv",
             mime="text/csv",
-            use_container_width=True
+            width='stretch'
         )
 
 
