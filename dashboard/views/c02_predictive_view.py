@@ -46,27 +46,27 @@ def render_c02_view(current_packet: Dict[str, Any] = None, history_df: pd.DataFr
         s_col1, s_col2, s_col3, s_col4, s_col5 = st.columns(5)
 
         with s_col1:
-            if st.button("🟢 Nominal Baseline", use_container_width=True):
+            if st.button("🟢 Nominal Baseline", key="btn_c02_nominal", use_container_width=True):
                 if "simulator" in st.session_state:
                     st.session_state.simulator.set_fault_regime("NOMINAL")
                 st.rerun()
         with s_col2:
-            if st.button("💨 Pneumatic Air Leak", use_container_width=True):
+            if st.button("💨 Pneumatic Air Leak", key="btn_c02_leak", use_container_width=True):
                 if "simulator" in st.session_state:
                     st.session_state.simulator.set_fault_regime("AIR_LEAK")
                 st.rerun()
         with s_col3:
-            if st.button("🔨 Bearing Knock", use_container_width=True):
+            if st.button("🔨 Bearing Knock", key="btn_c02_bearing_knock", use_container_width=True):
                 if "simulator" in st.session_state:
                     st.session_state.simulator.set_fault_regime("BEARING_VALVE_KNOCK")
                 st.rerun()
         with s_col4:
-            if st.button("🚨 Valve Overpressure", use_container_width=True):
+            if st.button("🚨 Valve Overpressure", key="btn_c02_overpressure", use_container_width=True):
                 if "simulator" in st.session_state:
                     st.session_state.simulator.set_fault_regime("CRITICAL_OVERPRESSURE")
                 st.rerun()
         with s_col5:
-            if st.button("🔥 Critical Overheat", use_container_width=True):
+            if st.button("🔥 Critical Overheat", key="btn_c02_overheat", use_container_width=True):
                 if "simulator" in st.session_state:
                     st.session_state.simulator.set_fault_regime("THERMAL_OVERHEAT")
                 st.rerun()
