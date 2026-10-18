@@ -62,9 +62,7 @@ if "telemetry_mode" not in st.session_state:
     st.session_state.telemetry_mode = "Simulation Replay"
 
 
-# ==============================================================================
 # SIDEBAR CONTROLS & FAULT INJECTION RIG
-# ==============================================================================
 with st.sidebar:
     st.markdown("### 🎛️ Mission Control")
     st.markdown("Configure operational inputs and trigger physical fault injections for live demonstrations.")
@@ -193,23 +191,29 @@ with st.sidebar:
         if st.button("🟢 Nominal Run", use_container_width=True):
             st.session_state.simulator.set_fault_regime("NOMINAL")
             st.toast("Operating regime set to NOMINAL")
+            st.rerun()
 
         if st.button("💨 Air Leak Fault", use_container_width=True):
             st.session_state.simulator.set_fault_regime("AIR_LEAK")
             st.toast("Injected Pneumatic Air Leak!")
+            st.rerun()
 
     with f_col2:
         if st.button("🔨 Bearing Knock", use_container_width=True):
             st.session_state.simulator.set_fault_regime("BEARING_VALVE_KNOCK")
             st.toast("Injected Mechanical Bearing Knock!")
+            st.rerun()
 
         if st.button("🚨 Overpressure", use_container_width=True):
             st.session_state.simulator.set_fault_regime("CRITICAL_OVERPRESSURE")
             st.toast("Injected Pressure Ramp -> Overpressure Cutoff!")
+            st.rerun()
 
     if st.button("🔥 Thermal Overheat", use_container_width=True):
         st.session_state.simulator.set_fault_regime("THERMAL_OVERHEAT")
         st.toast("Injected Thermal Overheating!")
+        st.rerun()
+
 
     st.markdown("---")
 
@@ -256,18 +260,16 @@ with st.sidebar:
         selected_component = st.selectbox(
             "Select Component View",
             [
-                "⚡ C01: Edge Sensing & DSP Waveforms (Matheesha)",
-                "🧠 C02: AI Predictive Maintenance & RUL (Herath)",
-                "🌐 C03: Industrial Digital Twin (Kahakotuwa)",
-                "🎯 C04: RL Prescriptive Maintenance (Liyanage)"
+                "⚡ C01: Edge Sensing & DSP Waveforms",
+                "🧠 C02: AI Predictive Maintenance & RUL",
+                "🌐 C03: Industrial Digital Twin",
+                "🎯 C04: RL Prescriptive Maintenance"
             ],
             index=2
         )
 
 
-# ==============================================================================
 # DATA INGESTION & DISPATCH
-# ==============================================================================
 if "total_steps" not in st.session_state:
     st.session_state.total_steps = 0
 
@@ -305,9 +307,7 @@ if current_packet:
 history_df = pd.DataFrame(st.session_state.history) if st.session_state.history else pd.DataFrame()
 
 
-# ==============================================================================
 # MAIN VIEW COORDINATOR
-# ==============================================================================
 # 1. Top Executive Control Bar
 is_tripped = current_packet.get("trip_relay", False) if current_packet else False
 is_anomalous = current_packet.get("is_anomalous", False) if current_packet else False
