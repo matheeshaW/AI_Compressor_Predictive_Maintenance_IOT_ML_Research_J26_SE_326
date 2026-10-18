@@ -220,3 +220,20 @@ header[data-testid="stHeader"] {
 ::-webkit-scrollbar-thumb:hover {
     background: #06B6D4;
 }
+
+/* C02 Compatibility Badges */
+.kpi-sub {
+    font-size: 0.80rem;
+    color: var(--text-muted);
+}
+
+.badge-alert {
+    background: rgba(255, 82, 82, 0.15);
+    color: var(--neon-rose);
+    border: 1px solid rgba(255, 82, 82, 0.3);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+

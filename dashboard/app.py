@@ -75,17 +75,36 @@ with st.sidebar:
         selected_port = st.selectbox("Detected USB Serial COM Ports:", ports if ports else ["No Ports Detected"])
         col_c1, col_c2 = st.columns(2)
         with col_c1:
-            if st.button("🔗 Connect", width='stretch'):
+            if st.button("🔗 Connect", use_container_width=True, disabled=st.session_state.serial_client.is_connected):
                 if ports and selected_port != "No Ports Detected":
+                    st.session_state.serial_client.close()
                     success = st.session_state.serial_client.connect(selected_port)
                     if success:
-                        st.success("Connected to ESP32-S3!")
+                        st.toast(f"Connected to {selected_port}!")
+                        st.rerun()
                     else:
-                        st.error("Failed to connect.")
+                        st.error(f"Cannot open {selected_port}. Close Arduino IDE Serial Monitor first!")
         with col_c2:
-            if st.button("🔌 Disconnect", width='stretch'):
+            if st.button("🔌 Disconnect", use_container_width=True, disabled=not st.session_state.serial_client.is_connected):
                 st.session_state.serial_client.close()
-                st.info("Port closed.")
+                st.toast("Serial port closed.")
+                st.rerun()
+
+        if st.session_state.serial_client.is_connected:
+            st.markdown(
+                f"""<div style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10B981; border-radius: 8px; padding: 0.45rem 0.75rem; margin-top: 0.5rem; text-align: center;">
+                    <span style="color: #10B981; font-weight: 700; font-size: 0.85rem;">🟢 ONLINE: {st.session_state.serial_client.port}</span><br>
+                    <span style="color: #94A3B8; font-size: 0.72rem; font-family: monospace;">115200 Baud | Zero-Lag Telemetry</span>
+                </div>""",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                """<div style="background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 0.45rem 0.75rem; margin-top: 0.5rem; text-align: center;">
+                    <span style="color: #94A3B8; font-weight: 600; font-size: 0.8rem;">⚪ PORT DISCONNECTED</span>
+                </div>""",
+                unsafe_allow_html=True
+            )
 
     st.markdown("---")
 
@@ -120,6 +139,9 @@ with st.sidebar:
 
     # 3. Stream Controls & CSV Export
     st.markdown("##### ⏯️ Stream Playback")
+    auto_stream = st.checkbox("⚡ Auto-Stream Telemetry", value=True)
+    refresh_rate = st.slider("Stream Interval (sec)", min_value=0.15, max_value=2.0, value=0.30, step=0.05)
+
     p_col1, p_col2 = st.columns(2)
     with p_col1:
         if st.button("▶️ Step / Tick", width='stretch'):
@@ -127,6 +149,7 @@ with st.sidebar:
     with p_col2:
         if st.button("🧹 Clear Logs", width='stretch'):
             st.session_state.history = []
+            st.session_state.total_steps = 0
             st.session_state.simulator = CompressorTelemetrySimulator()
             st.rerun()
 
@@ -146,15 +169,23 @@ with st.sidebar:
 # ==============================================================================
 # DATA INGESTION & DISPATCH
 # ==============================================================================
+if "total_steps" not in st.session_state:
+    st.session_state.total_steps = 0
+
 current_packet = None
 if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
     raw_packet = st.session_state.serial_client.read_packet()
     if raw_packet:
         current_packet = raw_packet
-        current_packet["step"] = len(st.session_state.history) + 1
+        st.session_state.total_steps += 1
+        current_packet["step"] = st.session_state.total_steps
+    elif st.session_state.history:
+        current_packet = st.session_state.history[-1]
 else:
     # Use deterministic physical simulator
     current_packet = st.session_state.simulator.step()
+    st.session_state.total_steps += 1
+    current_packet["step"] = st.session_state.total_steps
 
 if current_packet:
     st.session_state.history.append(current_packet)
@@ -170,14 +201,16 @@ history_df = pd.DataFrame(st.session_state.history) if st.session_state.history 
 # ==============================================================================
 # 1. Top Executive Control Bar
 is_tripped = current_packet.get("trip_relay", False) if current_packet else False
+is_anomalous = current_packet.get("is_anomalous", False) if current_packet else False
 render_header(
     is_live_serial=(st.session_state.telemetry_mode == "Live Serial (ESP32-S3)"),
-    is_tripped=is_tripped
+    is_tripped=is_tripped,
+    has_anomaly=is_anomalous
 )
 
 # 2. Safety Interlock Alert Banner
 fault_cause = current_packet.get("fault_cause", "NORMAL") if current_packet else "NORMAL"
-render_alert_banner(is_tripped=is_tripped, fault_cause=fault_cause, latency_us=7.12)
+render_alert_banner(is_tripped=is_tripped, fault_cause=fault_cause, is_anomalous=is_anomalous, latency_us=7.12)
 
 # 3. Component Navigation Tabs
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -198,3 +231,9 @@ with tab3:
 
 with tab4:
     render_c04_view(current_packet, history_df)
+
+# Continuous Live Auto-Stream Loop
+if auto_stream and st.session_state.is_running:
+    time.sleep(refresh_rate)
+    st.rerun()
+

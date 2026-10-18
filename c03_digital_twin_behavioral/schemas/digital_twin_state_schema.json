@@ -1,0 +1,425 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Industrial_Digital_Twin_State_Schema",
+  "description": "Formal state representation schema for Component 03: Industrial Digital Twin & Behavioral Intelligence (Researcher: Kahakotuwa K.N, IT23432284). Developed under Design Science Research (DSR) methodology for industrial air compressor condition monitoring and prescriptive maintenance optimization in project J26-SE-326.",
+  "type": "object",
+  "required": [
+    "metadata",
+    "telemetry_snapshot",
+    "operating_state",
+    "behavioral_intelligence",
+    "degradation_metrics",
+    "subsystems",
+    "downstream_contract_payload"
+  ],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Digital twin artifact identity, physical asset mapping, and synchronization timestamps.",
+      "required": [
+        "twin_id",
+        "physical_asset_id",
+        "asset_type",
+        "twin_version",
+        "timestamp",
+        "sync_epoch_ms"
+      ],
+      "properties": {
+        "twin_id": {
+          "type": "string",
+          "description": "Unique identifier of the virtual digital twin instance.",
+          "example": "TWIN-COMPRESSOR-RECIP-01"
+        },
+        "physical_asset_id": {
+          "type": "string",
+          "description": "Identifier of the paired physical machine asset or testbed.",
+          "example": "ESP32S3-COMPRESSOR-TESTBED-01"
+        },
+        "asset_type": {
+          "type": "string",
+          "enum": [
+            "12V_RECIPROCATING_PISTON",
+            "INDUSTRIAL_ROTARY_SCREW",
+            "DUAL_STAGE_RECIPROCATING",
+            "CENTRIFUGAL_BENCHMARK"
+          ],
+          "description": "Mechanical compressor classification."
+        },
+        "twin_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "example": "1.0.0"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 UTC timestamp of state synchronization."
+        },
+        "sync_epoch_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Unix millisecond timestamp of synchronization clock."
+        }
+      }
+    },
+    "telemetry_snapshot": {
+      "type": "object",
+      "description": "Synchronized physical sensor values and DSP statistical feature vector ingested from Component 01.",
+      "required": [
+        "temperature_celsius",
+        "pressure_psi",
+        "motor_current_rms_a",
+        "vibration_x_rms_ms2",
+        "vibration_y_rms_ms2",
+        "vibration_z_rms_ms2",
+        "vibration_kurtosis",
+        "vibration_crest_factor",
+        "acoustic_energy_mv"
+      ],
+      "properties": {
+        "temperature_celsius": {
+          "type": "number",
+          "minimum": -20.0,
+          "maximum": 130.0,
+          "description": "Cylinder head / oil sump temperature from DS18B20."
+        },
+        "pressure_psi": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 150.0,
+          "description": "Current pneumatic chamber/discharge pressure in PSI."
+        },
+        "delta_pressure_dt": {
+          "type": "number",
+          "description": "First-order time derivative of pressure (dPres/dt) in PSI/sec."
+        },
+        "motor_current_rms_a": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 30.0,
+          "description": "Root-mean-square electrical current drawn by the motor."
+        },
+        "vibration_x_rms_ms2": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Mechanical acceleration RMS on horizontal radial X axis."
+        },
+        "vibration_y_rms_ms2": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Mechanical acceleration RMS on vertical radial Y axis."
+        },
+        "vibration_z_rms_ms2": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Mechanical acceleration RMS on axial Z axis."
+        },
+        "vibration_kurtosis": {
+          "type": "number",
+          "description": "Statistical 4th standardized moment quantifying bearing/piston impact impulsiveness."
+        },
+        "vibration_crest_factor": {
+          "type": "number",
+          "description": "Ratio of peak acceleration to RMS acceleration."
+        },
+        "acoustic_energy_mv": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Peak-to-peak acoustic amplitude from MAX4466 microphone in millivolts."
+        },
+        "sample_window_size": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 512,
+          "description": "Sliding window sample count used for feature calculation."
+        }
+      }
+    },
+    "predictive_diagnostics": {
+      "type": "object",
+      "description": "AI diagnostic health estimations and XAI attributions ingested from Component 02.",
+      "required": [
+        "predicted_fault",
+        "fault_probability",
+        "estimated_rul_hours",
+        "health_index"
+      ],
+      "properties": {
+        "predicted_fault": {
+          "type": "string",
+          "enum": [
+            "NORMAL",
+            "AIR_LEAK",
+            "VALVE_FAULT",
+            "BEARING_DEGRADATION",
+            "OVERHEATING"
+          ]
+        },
+        "fault_probability": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "estimated_rul_hours": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "rul_confidence_interval_95": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "health_index": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Composite continuous health score (1.0 = pristine, 0.0 = failure)."
+        }
+      }
+    },
+    "operating_state": {
+      "type": "object",
+      "description": "Autonomous operating regime discovered via unsupervised clustering (K-Means / GMM).",
+      "required": [
+        "cluster_id",
+        "state_label",
+        "state_confidence",
+        "clustering_algorithm"
+      ],
+      "properties": {
+        "cluster_id": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Discovered cluster index in the latent operational space."
+        },
+        "state_label": {
+          "type": "string",
+          "enum": [
+            "IDLE_UNLOADED",
+            "PRESSURIZING_LOADED",
+            "HOLDING_PRESSURE",
+            "BLOWDOWN_DISCHARGE",
+            "ANOMALOUS_LEAK_REGIME"
+          ],
+          "description": "Interpretable semantic label mapped to the operating cluster."
+        },
+        "state_confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Posterior cluster assignment probability or softmax distance weight."
+        },
+        "clustering_algorithm": {
+          "type": "string",
+          "enum": ["K_MEANS", "GAUSSIAN_MIXTURE_MODEL", "DBSCAN", "HEURISTIC_SEEDED_GMM"]
+        },
+        "time_in_state_seconds": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Cumulative continuous duration operating inside this cluster regime."
+        },
+        "transition_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total historical state transitions experienced by this asset."
+        }
+      }
+    },
+    "behavioral_intelligence": {
+      "type": "object",
+      "description": "Dynamic behavioral boundary tracking, distinguishing transient operational noise from persistent degradation drift.",
+      "required": [
+        "deviation_index",
+        "deviation_threshold",
+        "persistence_counter",
+        "persistence_threshold",
+        "deviation_classification",
+        "drift_detected"
+      ],
+      "properties": {
+        "deviation_index": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Normalized Mahalanobis or Euclidean distance from the learned state-specific cluster centroid."
+        },
+        "deviation_threshold": {
+          "type": "number",
+          "minimum": 0.0,
+          "default": 3.0,
+          "description": "Dynamic sigma threshold defining the normal operational envelope for this state."
+        },
+        "persistence_counter": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of consecutive sample windows exhibiting deviation index exceeding threshold."
+        },
+        "persistence_threshold": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5,
+          "description": "Number of consecutive anomalous windows required before declaring persistent drift."
+        },
+        "deviation_classification": {
+          "type": "string",
+          "enum": [
+            "NOMINAL",
+            "TRANSIENT_PERTURBATION",
+            "PERSISTENT_DEGRADATION",
+            "CRITICAL_DRIFT"
+          ],
+          "description": "Categorical qualification of observed behavioral deviation."
+        },
+        "drift_detected": {
+          "type": "boolean",
+          "description": "True if persistence counter exceeds persistence threshold."
+        },
+        "state_cluster_centroid": {
+          "type": "object",
+          "description": "Expected reference feature values for the currently active state cluster.",
+          "additionalProperties": { "type": "number" }
+        },
+        "state_cluster_variance": {
+          "type": "object",
+          "description": "Learned variance bounds for the active cluster regime.",
+          "additionalProperties": { "type": "number" }
+        }
+      }
+    },
+    "degradation_metrics": {
+      "type": "object",
+      "description": "Quantitative thermodynamic and mechanical degradation indicators.",
+      "required": [
+        "composite_degradation_score",
+        "pressure_efficiency_ratio",
+        "thermal_dissipation_factor"
+      ],
+      "properties": {
+        "composite_degradation_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Multi-dimensional weighted degradation score (0.0 = healthy, 1.0 = failed)."
+        },
+        "pressure_efficiency_ratio": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Ratio of measured pressurization rate to baseline nameplate compression rate."
+        },
+        "thermal_dissipation_factor": {
+          "type": "number",
+          "description": "Rate of temperature rise per unit of motor electrical power consumed (°C/Watt)."
+        },
+        "mechanical_vibration_severity": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Normalized ISO 10816-3 mechanical vibration severity index."
+        }
+      }
+    },
+    "subsystems": {
+      "type": "object",
+      "description": "Sub-assembly health decomposition modeled in the digital twin schematic.",
+      "required": [
+        "electric_motor",
+        "cylinder_piston_assembly",
+        "suction_discharge_valves",
+        "main_bearing_assembly"
+      ],
+      "properties": {
+        "electric_motor": {
+          "type": "object",
+          "required": ["health_score", "status", "operating_temperature_c", "rms_current_a"],
+          "properties": {
+            "health_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "status": { "type": "string", "enum": ["NOMINAL", "ELEVATED_TEMP", "CURRENT_OVERLOAD", "CRITICAL"] },
+            "operating_temperature_c": { "type": "number" },
+            "rms_current_a": { "type": "number" }
+          }
+        },
+        "cylinder_piston_assembly": {
+          "type": "object",
+          "required": ["health_score", "status", "compression_rate_psi_s", "seal_integrity_ratio"],
+          "properties": {
+            "health_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "status": { "type": "string", "enum": ["OPTIMAL", "PRESSURE_LOSS", "RING_BLOWBY", "CRITICAL"] },
+            "compression_rate_psi_s": { "type": "number" },
+            "seal_integrity_ratio": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "suction_discharge_valves": {
+          "type": "object",
+          "required": ["health_score", "status", "flow_efficiency_ratio", "valve_leakage_detected"],
+          "properties": {
+            "health_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "status": { "type": "string", "enum": ["NORMAL", "VALVE_CHATTER", "LEAKAGE_DETECTED", "FAILURE"] },
+            "flow_efficiency_ratio": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "valve_leakage_detected": { "type": "boolean" }
+          }
+        },
+        "main_bearing_assembly": {
+          "type": "object",
+          "required": ["health_score", "status", "vibration_rms_ms2", "impact_kurtosis"],
+          "properties": {
+            "health_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "status": { "type": "string", "enum": ["NOMINAL", "WEAR_DETECTED", "CRITICAL_FRICTION", "IMPACTING"] },
+            "vibration_rms_ms2": { "type": "number" },
+            "impact_kurtosis": { "type": "number" }
+          }
+        }
+      }
+    },
+    "downstream_contract_payload": {
+      "type": "object",
+      "description": "Standardized payload exported directly to Component 04 RL Maintenance Optimization, conforming strictly to c03_to_c04_twin_state_contract.json.",
+      "required": [
+        "timestamp",
+        "twin_id",
+        "operating_state",
+        "behavioral_intelligence",
+        "degradation_metrics"
+      ],
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "twin_id": { "type": "string" },
+        "operating_state": {
+          "type": "object",
+          "required": ["cluster_id", "state_label", "state_confidence"],
+          "properties": {
+            "cluster_id": { "type": "integer" },
+            "state_label": {
+              "type": "string",
+              "enum": [
+                "IDLE_UNLOADED",
+                "PRESSURIZING_LOADED",
+                "HOLDING_PRESSURE",
+                "BLOWDOWN_DISCHARGE",
+                "ANOMALOUS_LEAK_REGIME"
+              ]
+            },
+            "state_confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          }
+        },
+        "behavioral_intelligence": {
+          "type": "object",
+          "required": ["deviation_index", "persistence_counter", "drift_detected"],
+          "properties": {
+            "deviation_index": { "type": "number", "minimum": 0.0 },
+            "persistence_counter": { "type": "integer", "minimum": 0 },
+            "drift_detected": { "type": "boolean" }
+          }
+        },
+        "degradation_metrics": {
+          "type": "object",
+          "required": ["composite_degradation_score", "pressure_efficiency_ratio"],
+          "properties": {
+            "composite_degradation_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "pressure_efficiency_ratio": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "thermal_dissipation_factor": { "type": "number" }
+          }
+        }
+      }
+    }
+  }
+}
