@@ -109,7 +109,13 @@ class DegradationTracker:
         self._recent_deviations.append(d_m)
 
         # 1. Update temporal persistence counter
-        if d_m > self.deviation_threshold:
+        is_state_anomalous = (
+            getattr(assessment, "state_label", "") == "ANOMALOUS_LEAK_REGIME"
+            or getattr(assessment, "state_label", "") == OperatingStateLabel.ANOMALOUS_LEAK_REGIME.value
+        )
+        is_deviant = (d_m > self.deviation_threshold) or is_state_anomalous
+
+        if is_deviant:
             self.persistence_counter += 1
         else:
             self.persistence_counter = max(0, self.persistence_counter - 1)
@@ -117,7 +123,9 @@ class DegradationTracker:
         self.drift_detected = bool(self.persistence_counter >= self.persistence_threshold)
 
         # 2. Categorize deviation classification
-        if d_m >= (2.0 * self.deviation_threshold):
+        if is_state_anomalous and self.drift_detected:
+            self.current_classification = DeviationClassification.CRITICAL_DRIFT
+        elif d_m >= (2.0 * self.deviation_threshold):
             self.current_classification = DeviationClassification.CRITICAL_DRIFT
         elif self.drift_detected:
             self.current_classification = DeviationClassification.PERSISTENT_DEGRADATION

@@ -268,13 +268,12 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     if latest_payload is None:
         latest_payload = controller.process_telemetry(DigitalTwinViewController.VIVA_SCENARIOS["NOMINAL_LOADED"]["packet"])
 
-    # Header & Academic Identity
+    # Header & Component Subtitle
     st.markdown("### 🧬 Component 03: Industrial Digital Twin & Behavioral Intelligence")
-    st.caption(
-        "Lead Researcher: **Kahakotuwa K.N (IT23432284)** | Project: **J26-SE-326** | SLIIT AIMS Cluster<br>"
-        "Design Science Research (DSR) Artifact: Real-time Cyber-Physical Digital Twin tracking latent thermodynamic "
-        "operating regimes (GMM/K-Means), regularized Mahalanobis behavioral envelopes, and subsystem structural degradation.",
-        unsafe_allow_html=True
+    st.markdown(
+        "*Real-time cyber-physical synchronization and behavioral intelligence engine. Resamples multi-modal telemetry at 25 Hz, "
+        "discovers operational regimes via Gaussian Mixture Models (K=5), evaluates state-conditioned regularized Mahalanobis envelopes, "
+        "and tracks subsystem structural degradation.*"
     )
 
     # ==============================================================================
@@ -294,6 +293,12 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
             if st.button("🟢 Nominal (75 PSI)", key="btn_c03_nominal", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["NOMINAL_LOADED"]["packet"]
                 st.session_state.c03_active_scenario = "Nominal Pressurizing (75 PSI)"
+                # Cleanly reset persistence and recent deviations for healthy nominal run
+                controller.engine.buffer.clear()
+                controller.engine.tracker.persistence_counter = 0
+                controller.engine.tracker.drift_detected = False
+                controller.engine.tracker._recent_deviations.clear()
+                controller.engine.tracker._composite_score = 0.0
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
                 st.toast("Injected: Healthy Pressurizing Regime")
                 st.rerun()
@@ -302,15 +307,25 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
             if st.button("💨 Valve Leak (92 PSI)", key="btn_c03_valve_leak", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["PNEUMATIC_VALVE_LEAK"]["packet"]
                 st.session_state.c03_active_scenario = "Pneumatic Valve Leakage (92 PSI)"
-                st.session_state.c03_active_payload = controller.process_telemetry(p)
-                st.toast("Injected: Pneumatic Valve Leakage Fault!")
+                controller.engine.buffer.clear()
+                # Step 5 consecutive frames to demonstrate persistent drift declaration
+                payload = None
+                for _ in range(5):
+                    payload = controller.process_telemetry(p)
+                st.session_state.c03_active_payload = payload
+                st.toast("Injected: Pneumatic Valve Leakage Fault (Persistent Drift)!")
                 st.rerun()
 
         with sc_col3:
             if st.button("🔨 Bearing Knock", key="btn_c03_bearing_knock", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["BEARING_SPALL_DAMAGE"]["packet"]
                 st.session_state.c03_active_scenario = "Bearing Impact Knocking"
-                st.session_state.c03_active_payload = controller.process_telemetry(p)
+                controller.engine.buffer.clear()
+                # Step 5 consecutive frames to trigger persistent mechanical knock
+                payload = None
+                for _ in range(5):
+                    payload = controller.process_telemetry(p)
+                st.session_state.c03_active_payload = payload
                 st.toast("Injected: Mechanical Bearing Fatigue Impact!")
                 st.rerun()
 
@@ -318,6 +333,10 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
             if st.button("⚡ Transient Spike", key="btn_c03_transient_spike", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["TRANSIENT_NOISE_SPIKE"]["packet"]
                 st.session_state.c03_active_scenario = "Transient Noise Spike"
+                # Reset counter to 0 so the single-frame spike cleanly registers as 1/5 (filtering noise)
+                controller.engine.buffer.clear()
+                controller.engine.tracker.persistence_counter = 0
+                controller.engine.tracker.drift_detected = False
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
                 st.toast("Injected: Single-Frame Transient Noise Spike (Tests Noise Rejection)")
                 st.rerun()
@@ -326,6 +345,9 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
             if st.button("🛑 Purge Discharge", key="btn_c03_purge_discharge", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["BLOWDOWN_VENT"]["packet"]
                 st.session_state.c03_active_scenario = "Purge Valve Discharge"
+                controller.engine.buffer.clear()
+                controller.engine.tracker.persistence_counter = 0
+                controller.engine.tracker.drift_detected = False
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
                 st.toast("Injected: Purge Valve Discharge")
                 st.rerun()
@@ -334,6 +356,9 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
             if st.button("🔄 Resume Stream", key="btn_c03_resume_stream", use_container_width=True, disabled=not is_scenario_injected):
                 st.session_state.c03_active_payload = None
                 st.session_state.c03_active_scenario = None
+                controller.engine.buffer.clear()
+                controller.engine.tracker.persistence_counter = 0
+                controller.engine.tracker.drift_detected = False
                 st.toast("Resumed live telemetry stream from sidebar simulator")
                 st.rerun()
 
