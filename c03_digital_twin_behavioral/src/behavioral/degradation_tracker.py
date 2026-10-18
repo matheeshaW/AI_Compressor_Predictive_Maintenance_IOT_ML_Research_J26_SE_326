@@ -1,8 +1,5 @@
 """
-src/behavioral/degradation_tracker.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Multi-window temporal persistence filtering and quantitative degradation indicators.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+Multi-window temporal persistence filtering and mechanical/thermodynamic degradation tracking.
 """
 
 from collections import deque

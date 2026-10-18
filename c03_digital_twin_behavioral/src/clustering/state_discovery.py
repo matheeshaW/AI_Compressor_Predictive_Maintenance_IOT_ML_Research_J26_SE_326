@@ -1,15 +1,30 @@
 """
-src/clustering/state_discovery.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Unsupervised operational state discovery, clustering, and semantic regime mapping.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+Operational state discovery using unsupervised clustering (GMM and K-Means)
+and semantic mapping of compressor operating regimes.
 """
 
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any, Union
-import joblib
+try:
+    import joblib
+except ImportError:
+    import pickle
+
+    class _JoblibFallback:
+        @staticmethod
+        def dump(value, filename, **kwargs):
+            with open(filename, "wb") as f:
+                pickle.dump(value, f)
+
+        @staticmethod
+        def load(filename, **kwargs):
+            with open(filename, "rb") as f:
+                return pickle.load(f)
+
+    joblib = _JoblibFallback()
+
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans

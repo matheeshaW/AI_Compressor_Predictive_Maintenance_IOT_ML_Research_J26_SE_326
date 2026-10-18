@@ -110,6 +110,16 @@ public:
 
     DSPFeatureVector computeFeatures();
 
+    void reset() {
+        vibXBuffer.clear();
+        vibYBuffer.clear();
+        vibZBuffer.clear();
+        pressureBuffer.clear();
+        pressureTimeBuffer.clear();
+        currentBuffer.clear();
+        acousticBuffer.clear();
+    }
+
     // Core statistical functions
     static float computeMean(const float* data, size_t n);
     static float computeRMS(const float* data, size_t n);

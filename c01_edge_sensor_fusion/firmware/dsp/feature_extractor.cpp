@@ -70,7 +70,9 @@ float MultiModalFeatureExtractor::computePeakToPeak(const float* data, size_t n,
 }
 
 float MultiModalFeatureExtractor::computeKurtosis(const float* data, size_t n, float mean, float std_dev) {
-    if (n < 4 || std_dev < 1e-5f) {
+    // If window is too small or dynamic vibration is below the MEMS accelerometer stationary noise floor (0.05 m/s^2),
+    // lock kurtosis to Gaussian mesokurtic baseline (3.0f) to avoid division-by-noise singularity
+    if (n < 4 || std_dev < 0.05f) {
         return 3.0f; // Default mesokurtic baseline for healthy Gaussian process
     }
     float sumFourth = 0.0f;
@@ -128,12 +130,13 @@ DSPFeatureVector MultiModalFeatureExtractor::computeFeatures() {
     feats.vib_x_kurtosis = computeKurtosis(arrX, nVib, meanX, stdX);
 
     // Dynamic AC Crest Factor: Peak dynamic excursion divided by AC RMS (std_dev)
+    // Guard against stationary noise floor (< 0.05 m/s^2) to prevent noise division spike
     float peakDevX = 0.0f;
     for (size_t i = 0; i < nVib; i++) {
         float dev = fabsf(arrX[i] - meanX);
         if (dev > peakDevX) peakDevX = dev;
     }
-    feats.vib_x_crest_factor = (stdX > 1e-4f) ? (peakDevX / stdX) : 0.0f;
+    feats.vib_x_crest_factor = (stdX >= 0.05f) ? (peakDevX / stdX) : 1.0f;
 
 
     // 2. Pressure & Delta P / Delta T

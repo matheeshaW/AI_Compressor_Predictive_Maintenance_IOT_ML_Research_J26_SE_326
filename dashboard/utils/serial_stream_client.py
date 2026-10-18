@@ -68,6 +68,25 @@ class SerialStreamClient:
             self.is_connected = False
             return False
 
+    def send_command(self, cmd: str) -> bool:
+        """
+        Sends an ASCII command line to the ESP32-S3 over USB serial.
+        Commands:
+          - CMD:START -> Arms the relay and starts the compressor.
+          - CMD:STOP  -> De-energizes the relay and halts the compressor (Manual E-Stop).
+          - CMD:RESET -> Unlatches safety interlock, silences buzzer, and re-arms relay.
+        """
+        if not self.is_connected or not self.ser:
+            return False
+        try:
+            payload = f"{cmd.strip()}\n".encode('utf-8')
+            self.ser.write(payload)
+            self.ser.flush()
+            return True
+        except Exception as e:
+            print(f"[!] Serial command send error: {e}")
+            return False
+
     def read_packet(self) -> Optional[Dict[str, Any]]:
         """
         Reads and parses the LATEST real-time telemetry packet.
@@ -157,14 +176,13 @@ class SerialStreamClient:
 
                 # Calculate composite acceleration magnitude
                 v_composite = (vib_x**2 + vib_y**2 + vib_z**2)**0.5
-                v_rms_g = v_composite / 9.80665
 
                 # Update rolling vibration history for dynamic DSP kurtosis & crest factor
                 self.vib_history.append(v_composite)
                 if len(self.vib_history) > 30:
                     self.vib_history.pop(0)
 
-                # Compute dynamic statistical kurtosis & crest factor
+                # Compute dynamic statistical kurtosis, crest factor, and AC dynamic vibration RMS
                 if len(self.vib_history) >= 8:
                     vals = self.vib_history
                     mean_v = sum(vals) / len(vals)
@@ -173,12 +191,15 @@ class SerialStreamClient:
                     computed_kurtosis = m4 / (var_v**2) if var_v > 0.01 else 3.0
                     peak_v = max(vals)
                     computed_crest = peak_v / mean_v if mean_v > 0.1 else 1.5
+                    # Dynamic AC Vibration RMS (ISO 10816: static 1.0g Earth gravity filtered)
+                    v_dyn_rms_g = (var_v**0.5) / 9.80665
                 else:
                     computed_kurtosis = 3.02
                     computed_crest = 1.8
+                    v_dyn_rms_g = 0.02
 
                 # If sharp physical vibration shock detected on latest sample
-                if v_rms_g > 1.8 or computed_kurtosis > 7.0:
+                if v_dyn_rms_g > 0.8 or computed_kurtosis > 7.0:
                     kurtosis = max(computed_kurtosis, 8.2)
                     crest_factor = max(computed_crest, 6.2)
                 else:
@@ -188,10 +209,10 @@ class SerialStreamClient:
                 # Fault classification and severity score
                 if relay_latched:
                     score = 0.98
-                    fault_cause = "CRITICAL_OVERPRESSURE" if press_psi >= 45.0 else ("BEARING_VALVE_KNOCK" if (kurtosis >= 7.5 or sound_mv > 450.0) else "HARDWARE_EMERGENCY_TRIP")
+                    fault_cause = "CRITICAL_OVERPRESSURE" if press_psi >= 45.0 else ("BEARING_VALVE_KNOCK" if (kurtosis >= 7.5 or sound_mv > 1000.0) else "HARDWARE_EMERGENCY_TRIP")
                 elif anomaly:
                     score = 0.55
-                    fault_cause = "BEARING_VALVE_KNOCK" if kurtosis >= 7.0 else ("ACOUSTIC_ANOMALY" if sound_mv > 300.0 else ("MOTOR_OVERCURRENT" if curr_a > 13.0 else "STATISTICAL_OUTLIER"))
+                    fault_cause = "BEARING_VALVE_KNOCK" if kurtosis >= 7.0 else ("ACOUSTIC_ANOMALY" if sound_mv > 1000.0 else ("MOTOR_OVERCURRENT" if curr_a > 13.0 else "STATISTICAL_OUTLIER"))
                 else:
                     score = 0.08
                     fault_cause = "NORMAL"
@@ -204,7 +225,7 @@ class SerialStreamClient:
                     "pressure_psi": round(press_psi, 2),
                     "pressure_rate_of_change_psi_sec": 0.0,
                     "temperature_cylinder_head_c": round(temp_c, 1),
-                    "vibration_rms_g": round(v_rms_g, 3),
+                    "vibration_rms_g": round(v_dyn_rms_g, 3),
                     "vibration_kurtosis": round(kurtosis, 2),
                     "vibration_crest_factor": round(crest_factor, 2),
                     "acoustic_energy_mv": round(sound_mv, 1),

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Industrial_Digital_Twin_State_Schema",
-  "description": "Formal state representation schema for Component 03: Industrial Digital Twin & Behavioral Intelligence (Researcher: Kahakotuwa K.N, IT23432284). Developed under Design Science Research (DSR) methodology for industrial air compressor condition monitoring and prescriptive maintenance optimization in project J26-SE-326.",
+  "description": "State representation schema for Component 03: Industrial Digital Twin & Behavioral Intelligence in project J26-SE-326.",
   "type": "object",
   "required": [
     "metadata",

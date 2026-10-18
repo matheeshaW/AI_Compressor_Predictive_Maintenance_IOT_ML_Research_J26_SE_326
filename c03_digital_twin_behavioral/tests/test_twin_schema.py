@@ -1,8 +1,5 @@
 """
-test_twin_schema.py
-Unit tests verifying the formal Digital Twin JSON Schema and contract compatibility.
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+Unit tests for the Digital Twin JSON Schema and contract compatibility.
 """
 
 import json

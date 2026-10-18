@@ -4,12 +4,18 @@ app.py
 ======
 Industrial AI Compressor Intelligence Platform — Next-Gen Unified Dashboard
 SLIIT 4th Year Research Project: J26-SE-326
+Integrates All 4 Research Components:
+- C01: Edge Sensing & DSP Waveforms (Matheesha)
+- C02: AI Predictive Maintenance & RUL (Herath)
+- C03: Industrial Digital Twin & Behavioral Intelligence (Kahakotuwa)
+- C04: RL Prescriptive Maintenance Policies (Liyanage)
 """
 
 import os
 import sys
 import time
 import textwrap
+from pathlib import Path
 import pandas as pd
 import streamlit as st
 
@@ -21,10 +27,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Ensure dashboard root is in sys.path
+# Ensure dashboard root and repo root are in sys.path
 DASHBOARD_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.abspath(os.path.join(DASHBOARD_DIR, ".."))
 if DASHBOARD_DIR not in sys.path:
     sys.path.insert(0, DASHBOARD_DIR)
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 
 from utils.telemetry_simulator import CompressorTelemetrySimulator
 from utils.serial_stream_client import SerialStreamClient
@@ -59,7 +68,7 @@ if "telemetry_mode" not in st.session_state:
 # ==============================================================================
 with st.sidebar:
     st.markdown("### 🎛️ Mission Control")
-    st.markdown("Configure operational inputs and trigger physical fault injections for live viva demonstrations.")
+    st.markdown("Configure operational inputs and trigger physical fault injections for live demonstrations.")
 
     # 1. Telemetry Source Toggle
     st.markdown("##### 🔌 Telemetry Source")
@@ -108,7 +117,75 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 2. Live Fault Injection Trigger Rig
+    # 2. Hardware Actuator & Safety Interlock Control
+    st.markdown("##### ⚡ Actuator & Interlock Control")
+    st.caption("Direct hardware relay control & emergency unlatch:")
+
+    act_col1, act_col2 = st.columns(2)
+    with act_col1:
+        if st.button("🟢 Start", use_container_width=True, help="Arm relay and start compressor"):
+            if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
+                st.session_state.serial_client.send_command("CMD:START")
+                st.toast("Sent CMD:START to ESP32-S3")
+            else:
+                st.session_state.simulator.manual_start()
+                st.toast("Simulator: Compressor armed and started")
+
+    with act_col2:
+        if st.button("⏹️ E-Stop", use_container_width=True, help="Emergency power isolation (de-energize relay)"):
+            if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
+                st.session_state.serial_client.send_command("CMD:STOP")
+                st.toast("Sent CMD:STOP to ESP32-S3 (Relay Cut)")
+            else:
+                st.session_state.simulator.manual_stop()
+                st.toast("Simulator: Manual E-Stop triggered")
+
+    if st.button("🔄 Reset Safety Interlock", use_container_width=True, type="primary", help="Unlatch safety trip, silence buzzer, and re-arm relay"):
+        if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
+            ok = st.session_state.serial_client.send_command("CMD:RESET")
+            if ok:
+                st.toast("Sent CMD:RESET to ESP32-S3 (Interlock Cleared)")
+            else:
+                st.error("Failed to send CMD:RESET over serial")
+        else:
+            st.session_state.simulator.reset_interlock()
+            st.toast("Simulator: Interlock cleared to NOMINAL")
+        st.rerun()
+
+    cal_col1, cal_col2 = st.columns([1.6, 1])
+    is_live = (st.session_state.telemetry_mode == "Live Serial (ESP32-S3)")
+    with cal_col1:
+        tare_active = st.session_state.get("pressure_tared", False)
+        tare_offset = st.session_state.get("pressure_tare_psi", 0.0)
+        if is_live:
+            btn_txt = "🎯 Zero Pressure (0 PSI)" if not tare_active else "🎯 Zeroed (Hardware Calibrated)"
+        else:
+            btn_txt = "🎯 Zero Pressure (0 PSI)" if tare_offset == 0.0 else f"🎯 Tared (-{tare_offset:.1f} PSI)"
+
+        if st.button(btn_txt, use_container_width=True, help="Tare pressure sensor offset to 0.0 PSI in open air"):
+            st.session_state["pressure_tared"] = True
+            if is_live and st.session_state.serial_client.is_connected:
+                st.session_state.serial_client.send_command("CMD:TARE_P")
+                st.toast("ESP32-S3: Transducer zeroed to 0.0 PSI baseline on-chip")
+            else:
+                curr_raw = st.session_state.get("last_raw_pressure", 4.70)
+                st.session_state["pressure_tare_psi"] = curr_raw
+                st.toast(f"Simulator: Pressure zeroed (offset: -{curr_raw:.2f} PSI)")
+            st.rerun()
+    with cal_col2:
+        if st.button("↺ Reset Tare", use_container_width=True, help="Revert pressure calibration to factory offset"):
+            st.session_state["pressure_tared"] = False
+            st.session_state["pressure_tare_psi"] = 0.0
+            if is_live and st.session_state.serial_client.is_connected:
+                st.session_state.serial_client.send_command("CMD:RESET_CAL_P")
+                st.toast("ESP32-S3: Pressure calibration reset to 5V factory default (0.500V)")
+            else:
+                st.toast("Simulator: Pressure calibration reset to factory default")
+            st.rerun()
+
+    st.markdown("---")
+
+    # 3. Live Fault Injection Trigger Rig
     st.markdown("##### 💥 Live Fault Injection Rig")
     st.caption("Perturb the machine in real-time to demonstrate multi-modal anomaly detection and automated relay tripping:")
 
@@ -137,10 +214,10 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 3. Stream Controls & CSV Export
+    # 4. Stream Controls & CSV Export
     st.markdown("##### ⏯️ Stream Playback")
     auto_stream = st.checkbox("⚡ Auto-Stream Telemetry", value=True)
-    refresh_rate = st.slider("Stream Interval (sec)", min_value=0.15, max_value=2.0, value=0.30, step=0.05)
+    refresh_rate = st.slider("Stream Interval (sec)", min_value=0.15, max_value=2.0, value=1.30, step=0.05)
 
     p_col1, p_col2 = st.columns(2)
     with p_col1:
@@ -163,6 +240,29 @@ with st.sidebar:
             file_name=f"compressor_telemetry_session_{int(time.time())}.csv",
             mime="text/csv",
             width='stretch'
+        )
+
+    st.markdown("---")
+
+    # 4. View Presentation Mode & Component Selector
+    st.markdown("##### 🧩 Intelligence Modules View")
+    presentation_mode = st.radio(
+        "Presentation Mode:",
+        ["Unified Multi-Tab (All Components)", "Individual Component Focus"],
+        index=0
+    )
+
+    selected_component = None
+    if presentation_mode == "Individual Component Focus":
+        selected_component = st.selectbox(
+            "Select Component View",
+            [
+                "⚡ C01: Edge Sensing & DSP Waveforms (Matheesha)",
+                "🧠 C02: AI Predictive Maintenance & RUL (Herath)",
+                "🌐 C03: Industrial Digital Twin (Kahakotuwa)",
+                "🎯 C04: RL Prescriptive Maintenance (Liyanage)"
+            ],
+            index=2
         )
 
 
@@ -188,6 +288,16 @@ else:
     current_packet["step"] = st.session_state.total_steps
 
 if current_packet:
+    # Retain raw uncalibrated pressure for taring calculations
+    st.session_state["last_raw_pressure"] = current_packet.get("pressure_psi", 0.0)
+    # In Live Serial mode, the ESP32-S3 firmware zeroes pressureZeroOffsetV directly on-chip.
+    # Software tare subtraction is strictly for synthetic simulation mode to prevent double-subtraction.
+    if st.session_state.telemetry_mode != "Live Serial (ESP32-S3)":
+        tare_offset = st.session_state.get("pressure_tare_psi", 0.0)
+        if tare_offset > 0.0 and "pressure_psi" in current_packet:
+            current_packet["raw_pressure_psi"] = current_packet["pressure_psi"]
+            current_packet["pressure_psi"] = max(0.0, round(current_packet["pressure_psi"] - tare_offset, 2))
+
     st.session_state.history.append(current_packet)
     # Keep last 50 samples for rolling buffer
     if len(st.session_state.history) > 50:
@@ -212,25 +322,37 @@ render_header(
 fault_cause = current_packet.get("fault_cause", "NORMAL") if current_packet else "NORMAL"
 render_alert_banner(is_tripped=is_tripped, fault_cause=fault_cause, is_anomalous=is_anomalous, latency_us=7.12)
 
-# 3. Component Navigation Tabs
-tab1, tab2, tab3, tab4 = st.tabs([
-    "📡 C01: Edge Sensing & DSP",
-    "🧠 C02: AI Predictive & RUL",
-    "🧬 C03: Digital Twin Behavioral",
-    "🤖 C04: RL Prescriptive Policies"
-])
+# 3. View Routing (Unified Tabs OR Individual Component Focus)
+if presentation_mode == "Individual Component Focus" and selected_component is not None:
+    if "C01" in selected_component:
+        render_c01_view(current_packet, history_df)
+    elif "C02" in selected_component:
+        render_c02_view(current_packet, history_df)
+    elif "C03" in selected_component:
+        render_c03_view(current_packet, history_df)
+    elif "C04" in selected_component:
+        render_c04_view(current_packet, history_df)
+else:
+    # Component Navigation Tabs (Unified master view combining all research components)
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "📡 C01: Edge Sensing & DSP",
+        "🧠 C02: AI Predictive & RUL",
+        "🧬 C03: Digital Twin Behavioral",
+        "🤖 C04: RL Prescriptive Policies"
+    ])
 
-with tab1:
-    render_c01_view(current_packet, history_df)
+    with tab1:
+        render_c01_view(current_packet, history_df)
 
-with tab2:
-    render_c02_view(current_packet, history_df)
+    with tab2:
+        render_c02_view(current_packet, history_df)
 
-with tab3:
-    render_c03_view(current_packet, history_df)
+    with tab3:
+        render_c03_view(current_packet, history_df)
 
-with tab4:
-    render_c04_view(current_packet, history_df)
+    with tab4:
+        render_c04_view(current_packet, history_df)
+
 
 # Continuous Live Auto-Stream Loop
 if auto_stream and st.session_state.is_running:

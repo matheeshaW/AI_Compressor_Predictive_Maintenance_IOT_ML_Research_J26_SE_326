@@ -1,9 +1,6 @@
 """
-tests/test_clustering.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
 Unit tests for unsupervised state discovery, semantic regime mapping,
 and clustering evaluation metrics.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
 """
 
 import math

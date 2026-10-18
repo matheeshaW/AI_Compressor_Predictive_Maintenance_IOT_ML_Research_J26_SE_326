@@ -1,9 +1,6 @@
 """
-tests/test_behavioral.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
 Unit tests for state-conditioned behavioral profiling, Mahalanobis distance,
 transient noise filtering, and persistent degradation tracking.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
 """
 
 from pathlib import Path

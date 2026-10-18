@@ -1,9 +1,6 @@
 """
-src/clustering/cluster_evaluator.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Quantitative clustering evaluation metrics (Silhouette, Davies-Bouldin, Calinski-Harabasz)
-and synthetic multi-regime industrial compressor telemetry generator.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+Clustering evaluation metrics (Silhouette, Davies-Bouldin, Calinski-Harabasz)
+and synthetic telemetry generation for compressor state clustering benchmarks.
 """
 
 from dataclasses import dataclass
@@ -192,7 +189,7 @@ class ClusterEvaluator:
         4. BLOWDOWN_DISCHARGE
         5. ANOMALOUS_LEAK_REGIME
 
-        Useful for reproducible benchmarking, DSR artifact validation, and unit tests.
+        Useful for benchmarking, synthetic data simulations, and unit tests.
         """
         rng = np.random.RandomState(random_state)
         records: List[Dict[str, Any]] = []
