@@ -7,17 +7,13 @@ Component 04: Reinforcement Learning-Based Maintenance Optimization
 
 import os
 import tempfile
-import pytest
-import numpy as np
 
 from c04_rl_maintenance_optimization.src.env.compressor_maintenance_env import (
     CompressorMaintenanceEnv,
 )
 from c04_rl_maintenance_optimization.src.baselines.heuristic_policies import (
     RunToFailurePolicy,
-    PeriodicMaintenancePolicy,
 )
-from c04_rl_maintenance_optimization.src.agents.dqn_agent import DQNAgent
 from c04_rl_maintenance_optimization.experiments.run_comparative_experiment import (
     evaluate_policy,
     save_metrics_to_csv,

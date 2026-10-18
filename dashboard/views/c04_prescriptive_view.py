@@ -22,7 +22,7 @@ import pandas as pd
 import streamlit as st
 import textwrap
 import plotly.graph_objects as go
-from typing import Dict, Any, Optional, Tuple, List, Union
+from typing import Dict, Any, Optional, Tuple
 
 # Resolve project roots
 VIEW_DIR = os.path.dirname(os.path.abspath(__file__))

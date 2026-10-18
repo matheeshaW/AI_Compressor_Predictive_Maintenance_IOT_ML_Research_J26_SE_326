@@ -20,7 +20,6 @@ import torch
 
 from c04_rl_maintenance_optimization.src.agents.replay_buffer import (
     ReplayBuffer,
-    Transition,
 )
 from c04_rl_maintenance_optimization.src.agents.dqn_agent import (
     QNetwork,

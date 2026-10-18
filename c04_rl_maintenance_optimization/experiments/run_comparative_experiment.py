@@ -21,7 +21,7 @@ Extracts and exports primary quantitative research metrics:
   - Catastrophic Failure Prevention Rate (%)
 """
 
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 import argparse
 import csv
 import json
@@ -45,7 +45,6 @@ from c04_rl_maintenance_optimization.src.env.compressor_maintenance_env import (
 from c04_rl_maintenance_optimization.src.baselines.heuristic_policies import (
     RunToFailurePolicy,
     PeriodicMaintenancePolicy,
-    BasePolicy,
 )
 from c04_rl_maintenance_optimization.src.agents.dqn_agent import DQNAgent
 from c04_rl_maintenance_optimization.src.train_dqn import train_dqn

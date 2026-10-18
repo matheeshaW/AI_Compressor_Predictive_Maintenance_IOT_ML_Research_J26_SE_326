@@ -20,22 +20,59 @@ Component 04 moves the system from prediction to optimal prescriptive action. It
 ## 2. Directory Structure
 ```text
 c04_rl_maintenance_optimization/
+├── docs/
+│   └── mdp_formulation.md
 ├── src/
 │   ├── env/
 │   │   ├── compressor_maintenance_env.py
 │   │   └── degradation_simulator.py
 │   ├── baselines/
+│   │   ├── heuristic_policies.py
 │   │   ├── run_to_failure_policy.py
 │   │   └── periodic_maintenance_policy.py
 │   ├── agents/
 │   │   ├── dqn_agent.py
 │   │   └── replay_buffer.py
-│   └── evaluate_policy.py
+│   └── train_dqn.py
 ├── experiments/
-│   └── run_comparative_experiment.py
+│   ├── checkpoints/
+│   │   └── dqn_agent.pt
+│   ├── results/
+│   │   ├── comparative_policy_metrics.csv
+│   │   ├── comparative_episodes_detailed.csv
+│   │   ├── comparative_metrics_summary.json
+│   │   ├── cost_vs_downtime_tradeoff.png
+│   │   ├── cumulative_reward_comparison.png
+│   │   └── policy_decision_trajectory.png
+│   ├── run_comparative_experiment.py
+│   └── generate_plots.py
 ├── notebooks/
 │   └── 01_rl_policy_evaluation.ipynb
 ├── requirements.txt
 └── tests/
-    └── test_compressor_env.py
+    ├── conftest.py
+    ├── test_baselines.py
+    ├── test_comparative_experiment.py
+    ├── test_compressor_env.py
+    └── test_dqn_agent.py
 ```
+
+---
+
+## 3. Execution & Verification
+
+### Run Unit Tests (35/35 Passing)
+```bash
+pytest c04_rl_maintenance_optimization/tests/
+```
+
+### Run 500-Episode Comparative Experiment
+```bash
+python c04_rl_maintenance_optimization/experiments/run_comparative_experiment.py
+```
+
+### Train DQN Agent
+```bash
+python c04_rl_maintenance_optimization/src/train_dqn.py
+```
+

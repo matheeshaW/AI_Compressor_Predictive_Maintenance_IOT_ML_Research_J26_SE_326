@@ -9,8 +9,6 @@ Project: SLIIT Research Project J26-SE-326 (AIR-GUARD AI)
 
 from typing import Dict, Any, List, Optional
 import argparse
-import os
-import sys
 import time
 import numpy as np
 import torch

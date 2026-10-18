@@ -4,7 +4,6 @@ test_compressor_env.py
 Unit tests for the C04 Gymnasium compressor simulation environment.
 """
 
-import pytest
 import numpy as np
 from c04_rl_maintenance_optimization.src.env.compressor_maintenance_env import CompressorMaintenanceEnv
 from c04_rl_maintenance_optimization.src.env.degradation_simulator import CompressorDegradationSimulator
