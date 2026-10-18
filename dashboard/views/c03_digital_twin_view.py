@@ -291,7 +291,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         sc_col1, sc_col2, sc_col3, sc_col4, sc_col5, sc_col6 = st.columns(6)
 
         with sc_col1:
-            if st.button("🟢 Nominal (75 PSI)", use_container_width=True):
+            if st.button("🟢 Nominal (75 PSI)", key="btn_c03_nominal", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["NOMINAL_LOADED"]["packet"]
                 st.session_state.c03_active_scenario = "Nominal Pressurizing (75 PSI)"
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
@@ -299,7 +299,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 st.rerun()
 
         with sc_col2:
-            if st.button("💨 Valve Leak (92 PSI)", use_container_width=True):
+            if st.button("💨 Valve Leak (92 PSI)", key="btn_c03_valve_leak", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["PNEUMATIC_VALVE_LEAK"]["packet"]
                 st.session_state.c03_active_scenario = "Pneumatic Valve Leakage (92 PSI)"
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
@@ -307,7 +307,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 st.rerun()
 
         with sc_col3:
-            if st.button("🔨 Bearing Knock", use_container_width=True):
+            if st.button("🔨 Bearing Knock", key="btn_c03_bearing_knock", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["BEARING_SPALL_DAMAGE"]["packet"]
                 st.session_state.c03_active_scenario = "Bearing Impact Knocking"
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
@@ -315,7 +315,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 st.rerun()
 
         with sc_col4:
-            if st.button("⚡ Transient Spike", use_container_width=True):
+            if st.button("⚡ Transient Spike", key="btn_c03_transient_spike", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["TRANSIENT_NOISE_SPIKE"]["packet"]
                 st.session_state.c03_active_scenario = "Transient Noise Spike"
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
@@ -323,7 +323,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 st.rerun()
 
         with sc_col5:
-            if st.button("🛑 Purge Discharge", use_container_width=True):
+            if st.button("🛑 Purge Discharge", key="btn_c03_purge_discharge", use_container_width=True):
                 p = DigitalTwinViewController.VIVA_SCENARIOS["BLOWDOWN_VENT"]["packet"]
                 st.session_state.c03_active_scenario = "Purge Valve Discharge"
                 st.session_state.c03_active_payload = controller.process_telemetry(p)
@@ -331,7 +331,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 st.rerun()
 
         with sc_col6:
-            if st.button("🔄 Resume Stream", use_container_width=True, disabled=not is_scenario_injected):
+            if st.button("🔄 Resume Stream", key="btn_c03_resume_stream", use_container_width=True, disabled=not is_scenario_injected):
                 st.session_state.c03_active_payload = None
                 st.session_state.c03_active_scenario = None
                 st.toast("Resumed live telemetry stream from sidebar simulator")

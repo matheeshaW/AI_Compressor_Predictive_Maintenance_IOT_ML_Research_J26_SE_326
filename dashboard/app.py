@@ -81,7 +81,7 @@ with st.sidebar:
         selected_port = st.selectbox("Detected USB Serial COM Ports:", ports if ports else ["No Ports Detected"])
         col_c1, col_c2 = st.columns(2)
         with col_c1:
-            if st.button("🔗 Connect", use_container_width=True, disabled=st.session_state.serial_client.is_connected):
+            if st.button("🔗 Connect", key="btn_connect_serial", use_container_width=True, disabled=st.session_state.serial_client.is_connected):
                 if ports and selected_port != "No Ports Detected":
                     st.session_state.serial_client.close()
                     success = st.session_state.serial_client.connect(selected_port)
@@ -91,7 +91,7 @@ with st.sidebar:
                     else:
                         st.error(f"Cannot open {selected_port}. Close Arduino IDE Serial Monitor first!")
         with col_c2:
-            if st.button("🔌 Disconnect", use_container_width=True, disabled=not st.session_state.serial_client.is_connected):
+            if st.button("🔌 Disconnect", key="btn_disconnect_serial", use_container_width=True, disabled=not st.session_state.serial_client.is_connected):
                 st.session_state.serial_client.close()
                 st.toast("Serial port closed.")
                 st.rerun()
@@ -120,7 +120,7 @@ with st.sidebar:
 
     act_col1, act_col2 = st.columns(2)
     with act_col1:
-        if st.button("🟢 Start", use_container_width=True, help="Arm relay and start compressor"):
+        if st.button("🟢 Start", key="btn_start_machine", use_container_width=True, help="Arm relay and start compressor"):
             if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
                 st.session_state.serial_client.send_command("CMD:START")
                 st.toast("Sent CMD:START to ESP32-S3")
@@ -129,7 +129,7 @@ with st.sidebar:
                 st.toast("Simulator: Compressor armed and started")
 
     with act_col2:
-        if st.button("⏹️ E-Stop", use_container_width=True, help="Emergency power isolation (de-energize relay)"):
+        if st.button("⏹️ E-Stop", key="btn_estop_machine", use_container_width=True, help="Emergency power isolation (de-energize relay)"):
             if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
                 st.session_state.serial_client.send_command("CMD:STOP")
                 st.toast("Sent CMD:STOP to ESP32-S3 (Relay Cut)")
@@ -137,7 +137,7 @@ with st.sidebar:
                 st.session_state.simulator.manual_stop()
                 st.toast("Simulator: Manual E-Stop triggered")
 
-    if st.button("🔄 Reset Safety Interlock", use_container_width=True, type="primary", help="Unlatch safety trip, silence buzzer, and re-arm relay"):
+    if st.button("🔄 Reset Safety Interlock", key="btn_reset_interlock_main", use_container_width=True, type="primary", help="Unlatch safety trip, silence buzzer, and re-arm relay"):
         if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
             ok = st.session_state.serial_client.send_command("CMD:RESET")
             if ok:
@@ -159,7 +159,7 @@ with st.sidebar:
         else:
             btn_txt = "🎯 Zero Pressure (0 PSI)" if tare_offset == 0.0 else f"🎯 Tared (-{tare_offset:.1f} PSI)"
 
-        if st.button(btn_txt, use_container_width=True, help="Tare pressure sensor offset to 0.0 PSI in open air"):
+        if st.button(btn_txt, key="btn_tare_pressure_sidebar", use_container_width=True, help="Tare pressure sensor offset to 0.0 PSI in open air"):
             st.session_state["pressure_tared"] = True
             if is_live and st.session_state.serial_client.is_connected:
                 st.session_state.serial_client.send_command("CMD:TARE_P")
@@ -170,7 +170,7 @@ with st.sidebar:
                 st.toast(f"Simulator: Pressure zeroed (offset: -{curr_raw:.2f} PSI)")
             st.rerun()
     with cal_col2:
-        if st.button("↺ Reset Tare", use_container_width=True, help="Revert pressure calibration to factory offset"):
+        if st.button("↺ Reset Tare", key="btn_reset_tare_sidebar", use_container_width=True, help="Revert pressure calibration to factory offset"):
             st.session_state["pressure_tared"] = False
             st.session_state["pressure_tare_psi"] = 0.0
             if is_live and st.session_state.serial_client.is_connected:
@@ -188,28 +188,28 @@ with st.sidebar:
 
     f_col1, f_col2 = st.columns(2)
     with f_col1:
-        if st.button("🟢 Nominal Run", use_container_width=True):
+        if st.button("🟢 Nominal Run", key="btn_fault_nominal_sidebar", use_container_width=True):
             st.session_state.simulator.set_fault_regime("NOMINAL")
             st.toast("Operating regime set to NOMINAL")
             st.rerun()
 
-        if st.button("💨 Air Leak Fault", use_container_width=True):
+        if st.button("💨 Air Leak Fault", key="btn_fault_air_leak_sidebar", use_container_width=True):
             st.session_state.simulator.set_fault_regime("AIR_LEAK")
             st.toast("Injected Pneumatic Air Leak!")
             st.rerun()
 
     with f_col2:
-        if st.button("🔨 Bearing Knock", use_container_width=True):
+        if st.button("🔨 Bearing Knock", key="btn_fault_bearing_knock_sidebar", use_container_width=True):
             st.session_state.simulator.set_fault_regime("BEARING_VALVE_KNOCK")
             st.toast("Injected Mechanical Bearing Knock!")
             st.rerun()
 
-        if st.button("🚨 Overpressure", use_container_width=True):
+        if st.button("🚨 Overpressure", key="btn_fault_overpressure_sidebar", use_container_width=True):
             st.session_state.simulator.set_fault_regime("CRITICAL_OVERPRESSURE")
             st.toast("Injected Pressure Ramp -> Overpressure Cutoff!")
             st.rerun()
 
-    if st.button("🔥 Thermal Overheat", use_container_width=True):
+    if st.button("🔥 Thermal Overheat", key="btn_fault_overheat_sidebar", use_container_width=True):
         st.session_state.simulator.set_fault_regime("THERMAL_OVERHEAT")
         st.toast("Injected Thermal Overheating!")
         st.rerun()
@@ -224,10 +224,10 @@ with st.sidebar:
 
     p_col1, p_col2 = st.columns(2)
     with p_col1:
-        if st.button("▶️ Step / Tick", use_container_width=True):
+        if st.button("▶️ Step / Tick", key="btn_sim_step", use_container_width=True):
             pass
     with p_col2:
-        if st.button("🧹 Clear Logs", use_container_width=True):
+        if st.button("🧹 Clear Logs", key="btn_clear_logs", use_container_width=True):
             st.session_state.history = []
             st.session_state.total_steps = 0
             st.session_state.simulator = CompressorTelemetrySimulator()
