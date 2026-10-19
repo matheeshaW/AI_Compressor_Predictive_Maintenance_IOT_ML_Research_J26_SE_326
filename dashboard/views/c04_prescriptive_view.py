@@ -49,42 +49,57 @@ ACTION_METADATA = {
         "direct_cost": 0.0,
         "urgency": "Nominal — No Intervention Required",
         "icon": "🟢",
-        "description": "System operating within safety margins. Production continues at full throughput with zero scheduled downtime.",
+        "description": "System operating within optimal cost boundaries. Deferring maintenance to maximize production uptime.",
     },
     1: {
         "name": "INSPECT_AND_MINOR_SERVICE",
-        "label": "Inspect & Minor Service (Air Leak Fix)",
-        "category": "Inspection",
+        "label": "Minor Service",
+        "category": "Preventative",
         "color": "#06B6D4",  # Cyan
         "downtime_h": 2.0,
-        "direct_cost": 200.0,
+        "direct_cost": 350.0,
         "urgency": "Low — Schedule during next shift transition",
         "icon": "🔍",
-        "description": "Minor pneumatic leak or valve flutter detected. Prescribes rapid 2h sealing service, resetting early degradation by 40%.",
+        "description": "Optimal intervention window reached due to early {active_regime} degradation. Executing minor service NOW resets early wear and avoids major overhaul costs.",
     },
     2: {
         "name": "SCHEDULE_MEDIUM_MAINTENANCE",
-        "label": "Schedule Medium Maintenance (Valve/Bearing)",
-        "category": "Preventive",
+        "label": "Major Overhaul",
+        "category": "Overhaul",
         "color": "#F59E0B",  # Amber
-        "downtime_h": 6.0,
-        "direct_cost": 600.0,
+        "downtime_h": 16.0,
+        "direct_cost": 2500.0,
         "urgency": "Medium — Execute within next 24 operating hours",
         "icon": "⚠️",
-        "description": "Elevated vibration kurtosis or thermal dissipation decay. Prescribes scheduled 6h overhaul, eliminating 80% of accumulated wear.",
+        "description": "Optimal intervention window reached due to {active_regime}. Executing maintenance NOW prevents catastrophic failure and minimizes total lifecycle costs.",
     },
     3: {
         "name": "EMERGENCY_MAJOR_MAINTENANCE",
-        "label": "Emergency Major Overhaul & Factory Reset",
-        "category": "Overhaul",
+        "label": "Emergency Shutdown",
+        "category": "Corrective",
         "color": "#EF4444",  # Crimson
-        "downtime_h": 16.0,
-        "direct_cost": 1500.0,
+        "downtime_h": 48.0,
+        "direct_cost": 8000.0,
         "urgency": "IMMEDIATE — Sub-50ms Interlock Trigger",
         "icon": "🚨",
-        "description": "Critical wear threshold exceeded or catastrophic hazard imminent. Prescribes comprehensive 16h overhaul with full component reset.",
+        "description": "Optimal intervention window reached due to {active_regime}. Executing maintenance NOW prevents catastrophic failure and minimizes total lifecycle costs.",
     },
 }
+
+
+def get_action_metadata(action_idx: int, active_regime: str = "NORMAL") -> Dict[str, Any]:
+    """
+    Returns a dynamically formatted metadata dictionary for the given prescriptive action,
+    interpolating the active fault/operational regime into the description.
+    """
+    base = dict(ACTION_METADATA.get(action_idx, ACTION_METADATA[0]))
+    regime_display = str(active_regime).strip() if active_regime else "NOMINAL"
+    if regime_display in ("NORMAL", "NOMINAL_LOADED", "PRESSURIZING_LOADED", "HOLDING_PRESSURE", "IDLE_UNLOADED"):
+        regime_display = "NOMINAL"
+    desc = base.get("description", "")
+    if "{active_regime}" in desc:
+        base["description"] = desc.format(active_regime=regime_display)
+    return base
 
 
 @st.cache_resource(show_spinner=False)
@@ -140,13 +155,54 @@ def extract_observation_vector(
     if history_df is None:
         history_df = pd.DataFrame()
 
-    # 1. Check for live C03 Digital Twin Payload
+        # 1. Check for live C03 Digital Twin Payload
     c03_payload = c03_payload_override
     if c03_payload is None and hasattr(st, "session_state"):
         if "c03_active_payload" in st.session_state and st.session_state.c03_active_payload:
             c03_payload = st.session_state.c03_active_payload
         elif "c03_controller" in st.session_state and getattr(st.session_state.c03_controller, "latest_payload", None):
             c03_payload = st.session_state.c03_controller.latest_payload
+
+    # 2. Extract multi-modal physical telemetry metrics from current packet
+    score = float(current_packet.get("anomaly_score", 0.05))
+    v_rms = float(current_packet.get("vibration_rms_g", 0.35))
+    kurt = float(current_packet.get("vibration_kurtosis", 3.0))
+    temp = float(current_packet.get("temperature_cylinder_head_c", 35.0))
+    trip_relay = bool(current_packet.get("trip_relay", False) or current_packet.get("relay_state") == "TRIPPED_OPEN")
+    packet_fault = current_packet.get("fault_cause", "NORMAL")
+
+    # Instantaneous physical degradation spike calculated from multi-modal cues
+    d_v = max(0.0, min(1.0, (v_rms - 0.30) / 0.50 + max(0.0, (kurt - 3.0) / 6.0)))
+    d_t = max(0.0, min(1.0, (temp - 30.0) / 45.0))
+    physical_deg = max(score, 0.6 * d_v + 0.4 * d_t)
+    if trip_relay:
+        physical_deg = max(physical_deg, 0.95)
+
+    # 3. Determine active fault with strict precedence
+    sim_regime = "NOMINAL"
+    active_scenario = ""
+    st_regime = "NOMINAL"
+    if hasattr(st, "session_state"):
+        st_regime = str(st.session_state.get("active_fault_regime", "NOMINAL"))
+        sim_regime = getattr(st.session_state.get("simulator"), "active_regime", "NOMINAL")
+        active_scenario = str(st.session_state.get("c03_active_scenario", ""))
+
+    # STRICT PRECEDENCE FOR FAULT RESOLUTION:
+    # 1. Sidebar fault injection rig session state ('active_fault_regime')
+    # 2. Simulator active regime if not nominal ('simulator.active_regime')
+    # 3. Packet fault cause if not normal ('current_packet.fault_cause')
+    # 4. Injected C03 scenario ('c03_active_scenario')
+    injected_fault = "NORMAL"
+    if st_regime not in ("NOMINAL", "NORMAL", None, ""):
+        injected_fault = st_regime
+    elif sim_regime not in ("NOMINAL", "NORMAL", None, ""):
+        injected_fault = sim_regime
+    elif packet_fault not in ("NORMAL", "NOMINAL", None, ""):
+        injected_fault = packet_fault
+    elif active_scenario not in ("NORMAL", "NOMINAL", None, ""):
+        injected_fault = active_scenario
+
+    f_str = str(injected_fault).upper()
 
     # --------------------------------------------------------------------------
     # BRANCH A: C03 Digital Twin Payload Exists (Standard Live Pipeline)
@@ -156,91 +212,66 @@ def extract_observation_vector(
         beh_intel = c03_payload.get("behavioral_intelligence", {})
         op_state = c03_payload.get("operating_state", {})
         meta = c03_payload.get("metadata", {})
-        pred_diag = c03_payload.get("predictive_diagnostics", {})
-
-        # s0: Composite Degradation D_t in [0.0, 1.0]
-        deg_t = float(deg_metrics.get("composite_degradation_score", 0.05))
-        deg_t = float(np.clip(deg_t, 0.0, 1.0))
-
-        # s1: Normalized RUL in [0.0, 1.0]
-        if "health_index" in pred_diag:
-            rul_t = float(pred_diag["health_index"])
-        else:
-            rul_t = float(1.0 - deg_t)
-        rul_t = float(np.clip(rul_t, 0.0, 1.0))
-
-        # s2: Behavioral Deviation index delta_t in [0.0, 10.0]
-        dev_idx = float(beh_intel.get("deviation_index", 0.0))
-        delta_t = float(np.clip(dev_idx, 0.0, 10.0))
-
-        # s3: Pressure Efficiency eta_t in [0.0, 1.0]
-        eta_t = float(deg_metrics.get("pressure_efficiency_ratio", 0.95))
-        eta_t = float(np.clip(eta_t, 0.0, 1.0))
-
-        # s4: Thermal Dissipation / Subsystem Health theta_t in [0.0, 3.0]
-        therm_factor = deg_metrics.get("thermal_dissipation_factor")
-        if therm_factor is not None:
-            theta_t = float(np.clip(float(therm_factor), 0.0, 3.0))
-        else:
-            theta_t = float(np.clip(3.0 * (1.0 - deg_t), 0.0, 3.0))
-
-        # s5: Fault / Regime Class k_t in {0, 1, 2, 3, 4}
         state_label = str(op_state.get("state_label", "NORMAL"))
-        active_scenario = ""
-        if hasattr(st, "session_state"):
-            active_scenario = str(st.session_state.get("c03_active_scenario", ""))
 
-        scen_lower = active_scenario.lower()
-        state_lower = state_label.lower()
+        c03_deg = float(deg_metrics.get("composite_degradation_score", 0.05))
 
-        if "leak" in scen_lower or "leak" in state_lower or state_label == "ANOMALOUS_LEAK_REGIME":
+        # Fault classification and degradation mapping with precedence over C03 state_label
+        if any(k in f_str for k in ("LEAK", "ANOMALOUS_LEAK")):
             k_t = 1.0
             active_regime = "PNEUMATIC_AIR_LEAK"
-        elif "bearing" in scen_lower or "knock" in scen_lower or "spall" in scen_lower:
+            deg_t = max(c03_deg, physical_deg, 0.60)
+            eta_t = float(min(deg_metrics.get("pressure_efficiency_ratio", 0.40), 0.45))
+            tau_t = 0.8
+        elif any(k in f_str for k in ("BEARING", "KNOCK", "SPALL", "VALVE_KNOCK")):
             k_t = 2.0
             active_regime = "BEARING_VALVE_KNOCK"
-        elif "overpressure" in scen_lower or "overpressure" in state_lower:
+            deg_t = max(c03_deg, physical_deg, 0.90)
+            eta_t = float(deg_metrics.get("pressure_efficiency_ratio", 0.85))
+            tau_t = 1.0
+        elif any(k in f_str for k in ("OVERPRESSURE", "PRESSURE_SURGE", "SURGE")):
             k_t = 3.0
             active_regime = "CRITICAL_OVERPRESSURE"
-        elif "thermal" in scen_lower or "overheat" in scen_lower:
+            deg_t = max(c03_deg, physical_deg, 0.95)
+            eta_t = 0.20
+            tau_t = 1.0
+        elif any(k in f_str for k in ("THERMAL", "OVERHEAT")):
             k_t = 4.0
             active_regime = "THERMAL_OVERHEAT"
-        elif state_label in ("PRESSURIZING_LOADED", "HOLDING_PRESSURE", "IDLE_UNLOADED"):
-            k_t = 0.0
-            active_regime = state_label
-        elif state_label == "BLOWDOWN_DISCHARGE":
-            k_t = 0.0
-            active_regime = "PURGE_BLOWDOWN"
-        elif current_packet.get("fault_cause", "NORMAL") != "NORMAL":
-            fault = current_packet.get("fault_cause")
-            active_regime = fault
-            fault_map = {
-                "NORMAL": 0.0,
-                "AIR_LEAK": 1.0,
-                "PNEUMATIC_AIR_LEAK": 1.0,
-                "BEARING_VALVE_KNOCK": 2.0,
-                "CRITICAL_OVERPRESSURE": 3.0,
-                "THERMAL_OVERHEAT": 4.0,
-            }
-            k_t = fault_map.get(fault, 0.0)
-        else:
-            meta_status = meta.get("twin_health_status", "NOMINAL")
-            if meta_status == "CRITICAL":
-                k_t = 1.0 if deg_t < 0.7 else 3.0
-                active_regime = "CRITICAL_FAULT"
-            else:
-                k_t = 0.0
-                active_regime = state_label if state_label else "NORMAL"
-
-        # s6: Anomaly Persistence counter tau_t in [0.0, 1.0]
-        persist_cnt = float(beh_intel.get("persistence_counter", 0))
-        drift_det = bool(beh_intel.get("drift_detected", False))
-        if drift_det:
+            deg_t = max(c03_deg, physical_deg, 0.90)
+            eta_t = 0.65
             tau_t = 1.0
+        elif "leak" in state_label.lower() or state_label == "ANOMALOUS_LEAK_REGIME":
+            k_t = 1.0
+            active_regime = "PNEUMATIC_AIR_LEAK"
+            deg_t = max(c03_deg, physical_deg, 0.55)
+            eta_t = 0.45
+            tau_t = 0.7
         else:
-            tau_t = float(np.clip(persist_cnt / 5.0, 0.0, 1.0))
+            k_t = 0.0
+            active_regime = "NOMINAL"
+            deg_t = max(c03_deg, physical_deg if score > 0.3 else 0.05)
+            eta_t = float(deg_metrics.get("pressure_efficiency_ratio", 0.95))
+            drift_det = bool(beh_intel.get("drift_detected", False))
+            tau_t = 1.0 if drift_det else float(np.clip(float(beh_intel.get("persistence_counter", 0)) / 5.0, 0.0, 1.0))
 
-        # s7: Elapsed cycle age since maintenance in [0.0, 1.0]
+        if trip_relay:
+            deg_t = max(deg_t, 0.95)
+            tau_t = 1.0
+
+        deg_t = float(np.clip(deg_t, 0.0, 1.0))
+        rul_t = float(np.clip(1.0 - deg_t, 0.0, 1.0))
+        eta_t = float(np.clip(eta_t, 0.0, 1.0))
+
+        c03_dev = float(beh_intel.get("deviation_index", 0.0))
+        if k_t > 0:
+            delta_t = float(np.clip(max(c03_dev, 2.0 + 3.0 * deg_t), 0.5, 5.5))
+            theta_t = float(np.clip(1.0 + 1.2 * deg_t, 0.0, 3.0))
+        else:
+            delta_t = float(np.clip(c03_dev if c03_dev > 0.0 else 0.5, 0.0, 5.5))
+            therm_factor = deg_metrics.get("thermal_dissipation_factor")
+            theta_t = float(np.clip(float(therm_factor) if therm_factor is not None else 1.0, 0.0, 3.0))
+
         cycle_idx = int(meta.get("twin_cycle_index", current_packet.get("step", 1)))
         t_maint = float(np.clip((cycle_idx % 500) / 500.0, 0.0, 1.0))
 
@@ -250,54 +281,57 @@ def extract_observation_vector(
     # --------------------------------------------------------------------------
     # BRANCH B: Mathematical Fallback (Only if C03 Payload is Missing Entirely)
     # --------------------------------------------------------------------------
-    score = float(current_packet.get("anomaly_score", 0.05))
-    v_rms = float(current_packet.get("vibration_rms_g", 0.35))
-    temp = float(current_packet.get("temperature_cylinder_head_c", 35.0))
-    fault = current_packet.get("fault_cause", "NORMAL")
-    active_regime = fault
-
-    # Map fault string to discrete class
-    fault_map = {
-        "NORMAL": 0.0,
-        "AIR_LEAK": 1.0,
-        "PNEUMATIC_AIR_LEAK": 1.0,
-        "BEARING_VALVE_KNOCK": 2.0,
-        "CRITICAL_OVERPRESSURE": 3.0,
-        "THERMAL_OVERHEAT": 4.0,
-    }
-    k_t = fault_map.get(fault, 0.0)
-
-    # Estimate physical degradation D_t from multi-modal cues
-    d_v = max(0.0, min(1.0, (v_rms - 0.30) / 1.5))
-    d_t = max(0.0, min(1.0, (temp - 30.0) / 60.0))
-    deg_t = max(score, 0.6 * d_v + 0.4 * d_t)
-    deg_t = float(np.clip(deg_t, 0.0, 1.0))
-
-    rul_t = float(np.clip(1.0 - deg_t, 0.0, 1.0))
-
-    # Rate of change
-    dp_dt = abs(float(current_packet.get("pressure_rate_of_change_psi_sec", 0.0)))
-    delta_t = float(np.clip(dp_dt * 2.0, 0.0, 5.0))
-
-    # Efficiency
-    curr = float(current_packet.get("motor_current_rms_amps", 8.5))
-    press = float(current_packet.get("pressure_psi", 30.0))
-    eta_t = float(np.clip((press / max(1.0, curr * 3.5)), 0.0, 1.0))
-
-    # Health index
-    theta_t = float(np.clip(3.0 * (1.0 - deg_t), 0.0, 3.0))
-
-    # Anomaly persistence over history
-    if not history_df.empty and "anomaly_score" in history_df.columns:
-        recent_scores = history_df["anomaly_score"].tail(10).values
-        tau_t = float(np.mean(recent_scores > 0.3))
+    if any(k in f_str for k in ("LEAK", "ANOMALOUS_LEAK")):
+        k_t = 1.0
+        active_regime = "PNEUMATIC_AIR_LEAK"
+        deg_t = max(physical_deg, 0.60)
+        eta_t = 0.40
+        tau_t = 0.8
+    elif any(k in f_str for k in ("BEARING", "KNOCK", "SPALL", "VALVE_KNOCK")):
+        k_t = 2.0
+        active_regime = "BEARING_VALVE_KNOCK"
+        deg_t = max(physical_deg, 0.90)
+        eta_t = 0.85
+        tau_t = 1.0
+    elif any(k in f_str for k in ("OVERPRESSURE", "PRESSURE_SURGE", "SURGE")):
+        k_t = 3.0
+        active_regime = "CRITICAL_OVERPRESSURE"
+        deg_t = max(physical_deg, 0.95)
+        eta_t = 0.20
+        tau_t = 1.0
+    elif any(k in f_str for k in ("THERMAL", "OVERHEAT")):
+        k_t = 4.0
+        active_regime = "THERMAL_OVERHEAT"
+        deg_t = max(physical_deg, 0.90)
+        eta_t = 0.65
+        tau_t = 1.0
     else:
+        k_t = 0.0
+        active_regime = "NOMINAL"
+        deg_t = physical_deg if score > 0.3 else 0.05
+        curr = float(current_packet.get("motor_current_rms_amps", 8.5))
+        press = float(current_packet.get("pressure_psi", 30.0))
+        eta_t = float(np.clip((press / max(1.0, curr * 3.5)), 0.0, 1.0))
         tau_t = 0.0 if score < 0.3 else 0.5
 
-    # Elapsed age
+    if trip_relay:
+        deg_t = max(deg_t, 0.95)
+        tau_t = 1.0
+
+    deg_t = float(np.clip(deg_t, 0.0, 1.0))
+    rul_t = float(np.clip(1.0 - deg_t, 0.0, 1.0))
+    eta_t = float(np.clip(eta_t, 0.0, 1.0))
+
+    if k_t > 0:
+        delta_t = float(np.clip(2.0 + 3.0 * deg_t, 0.5, 5.5))
+        theta_t = float(np.clip(1.0 + 1.2 * deg_t, 0.0, 3.0))
+    else:
+        dp_dt = abs(float(current_packet.get("pressure_rate_of_change_psi_sec", 0.0)))
+        delta_t = float(np.clip(dp_dt * 2.0, 0.0, 5.5))
+        theta_t = 1.0
+
     step_num = int(current_packet.get("step", 1))
     t_maint = float(np.clip((step_num % 100) / 100.0, 0.0, 1.0))
-
     obs = np.array([deg_t, rul_t, delta_t, eta_t, theta_t, k_t, tau_t, t_maint], dtype=np.float32)
     return obs, deg_t, active_regime
 
@@ -371,13 +405,21 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     obs, deg_t, active_regime = extract_observation_vector(current_packet, history_df)
 
     best_action, q_dict, confidence, inference_source = compute_policy_decision(agent, obs, deg_t, active_regime)
-    act_meta = ACTION_METADATA[best_action]
+    act_meta = get_action_metadata(best_action, active_regime)
 
-    # Display active scenario indicator if C03 injected perturbation is active
+    # Dynamic Active Regime Indicator
+    st.markdown(f"**Active Regime:** {active_regime}")
+
+    # Display active scenario or global fault injection indicator
     if hasattr(st, "session_state") and st.session_state.get("c03_active_scenario"):
         st.info(
             f"🔗 **Digital Twin Synchronized:** Receiving active cyber-physical state from C03 scenario: "
             f"**{st.session_state.c03_active_scenario}**"
+        )
+    elif active_regime not in ("NORMAL", "NOMINAL"):
+        st.warning(
+            f"⚡ **Live Fault Perturbation Detected:** RL Prescriptive policy responding to global simulated fault: "
+            f"**{active_regime}** (Degradation Spike: **{deg_t:.2f} / 1.00** | Prescribed: **{act_meta['label']}**)"
         )
 
     # ==========================================================================
@@ -411,13 +453,13 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         <div style="font-family: 'Outfit', sans-serif; font-size: 1.75rem; font-weight: 800; color: {act_meta['color']}; margin: 0.2rem 0;">
             {act_meta['label']}
         </div>
-        <div style="font-size: 0.9rem; color: #E2E8F0; margin-bottom: 0.8rem; line-height: 1.45;">
-            {act_meta['description']}
+        <div style="font-size: 0.95rem; color: #E2E8F0; margin-bottom: 0.8rem; line-height: 1.5; background: rgba(255, 255, 255, 0.04); border-left: 3px solid {act_meta['color']}; padding: 0.6rem 0.9rem; border-radius: 6px;">
+            <b>⏱️ RL Timing Rationale:</b> {act_meta['description']}
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 1.8rem; font-size: 0.85rem; color: #CBD5E1; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.65rem;">
             <span>Active Regime: <b style="color: #38BDF8;">{active_regime}</b></span>
             <span>Urgency: <b style="color: #F8FAFC;">{act_meta['urgency']}</b></span>
-            <span>Expected Downtime: <b style="color: #38BDF8;">{act_meta['downtime_h']} Hours</b></span>
+            <span>Expected Downtime: <b style="color: #38BDF8;">{act_meta['downtime_h']:.1f} Hours</b></span>
             <span>Direct Cost: <b style="color: #FBBF24;">${act_meta['direct_cost']:,.0f}</b></span>
             <span>Degradation Index: <b style="color: {act_meta['color']};">{deg_t:.2f} / 1.00</b></span>
             <span>State Value Q*(s, a): <b style="color: #34D399;">{q_dict[best_action]:+,.1f}</b></span>
@@ -434,7 +476,7 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         st.markdown("##### 🎯 Neural Network State-Action Values Q(s, a)")
         st.caption("Q-values evaluate expected cumulative discounted operational returns across discrete action choices:")
 
-        action_labels = [ACTION_METADATA[i]["name"] for i in range(4)]
+        action_labels = [ACTION_METADATA[i]["label"] for i in range(4)]
         q_vals = [q_dict[i] for i in range(4)]
         bar_colors = [ACTION_METADATA[i]["color"] if i == best_action else "#475569" for i in range(4)]
 
@@ -476,33 +518,35 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 item_deg = float(item.get("composite_degradation_score", 0.05))
                 item_label = str(item.get("state_label", "NORMAL"))
 
-                # For the latest item, ensure it matches current active regime/degradation if scenario injected
-                if item_cycle == c03_hist[-1].get("cycle") and hasattr(st, "session_state") and st.session_state.get("c03_active_scenario"):
+                # For the latest item, ensure it matches current active regime/degradation
+                if item_cycle == c03_hist[-1].get("cycle"):
                     item_regime = active_regime
                     item_deg = deg_t
+                    r_act = best_action
+                    r_conf = confidence
+                    r_meta = act_meta
                 else:
-                    item_regime = item_label
-
-                # Reconstruct observation vector for this snapshot
-                i_dev = min(10.0, float(item.get("deviation_index", 0.0)))
-                i_tau = min(1.0, float(item.get("persistence_counter", 0)) / 5.0)
-                i_k = 1.0 if any(k in item_regime.lower() for k in ("leak", "anomalous")) else (
-                    2.0 if any(k in item_regime.lower() for k in ("bearing", "knock", "spall")) else (
-                        3.0 if "overpressure" in item_regime.lower() else (
-                            4.0 if any(k in item_regime.lower() for k in ("thermal", "overheat")) else 0.0
+                    item_regime = item_label if item_label not in ("NORMAL", "PRESSURIZING_LOADED", "HOLDING_PRESSURE", "IDLE_UNLOADED") else "NOMINAL"
+                    # Reconstruct observation vector for this snapshot
+                    i_dev = min(5.5, float(item.get("deviation_index", 0.5)))
+                    i_tau = min(1.0, float(item.get("persistence_counter", 0)) / 5.0)
+                    i_k = 1.0 if any(k in item_regime.lower() for k in ("leak", "anomalous")) else (
+                        2.0 if any(k in item_regime.lower() for k in ("bearing", "knock", "spall")) else (
+                            3.0 if "overpressure" in item_regime.lower() else (
+                                4.0 if any(k in item_regime.lower() for k in ("thermal", "overheat")) else 0.0
+                            )
                         )
                     )
-                )
-                i_obs = np.array([item_deg, 1.0 - item_deg, i_dev, 0.95, 3.0 * (1.0 - item_deg), i_k, i_tau, (item_cycle % 500) / 500.0], dtype=np.float32)
+                    i_obs = np.array([item_deg, 1.0 - item_deg, i_dev, 0.95, 1.0 + 1.2 * item_deg, i_k, i_tau, (item_cycle % 500) / 500.0], dtype=np.float32)
 
-                r_act, _, r_conf, _ = compute_policy_decision(agent, i_obs, item_deg, item_regime)
-                r_meta = ACTION_METADATA[r_act]
+                    r_act, _, r_conf, _ = compute_policy_decision(agent, i_obs, item_deg, item_regime)
+                    r_meta = get_action_metadata(r_act, item_regime)
 
                 feed_rows.append({
                     "Step": item_cycle,
                     "Regime": item_regime,
                     "Degradation": f"{item_deg:.2f}",
-                    "Prescribed Action": r_meta["name"],
+                    "Prescribed Action": r_meta["label"],
                     "Confidence": f"{r_conf:.1f}%",
                     "Urgency": r_meta["urgency"].split("—")[0].strip(),
                 })
@@ -511,13 +555,13 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 row_dict = row.to_dict()
                 row_obs, row_deg, row_regime = extract_observation_vector(row_dict, history_df)
                 r_act, _, r_conf, _ = compute_policy_decision(agent, row_obs, row_deg, row_regime)
-                r_meta = ACTION_METADATA[r_act]
+                r_meta = get_action_metadata(r_act, row_regime)
 
                 feed_rows.append({
                     "Step": int(row_dict.get("step", idx)),
                     "Regime": row_regime,
                     "Degradation": f"{row_deg:.2f}",
-                    "Prescribed Action": r_meta["name"],
+                    "Prescribed Action": r_meta["label"],
                     "Confidence": f"{r_conf:.1f}%",
                     "Urgency": r_meta["urgency"].split("—")[0].strip(),
                 })

@@ -27,9 +27,25 @@ class CompressorTelemetrySimulator:
     def set_fault_regime(self, regime: str):
         """Injects a specific operational regime or fault mode."""
         self.active_regime = regime
+        # Automatically re-arm relay on fault switch to prevent getting stuck in trip state
+        self.relay_state = "ENERGIZED_CLOSED"
         if regime == "NOMINAL":
-            self.relay_state = "ENERGIZED_CLOSED"
             self.fault_cause = "NORMAL"
+            self.anomaly_score = 0.05
+        elif regime == "AIR_LEAK":
+            self.fault_cause = "PNEUMATIC_AIR_LEAK"
+            self.anomaly_score = 0.65
+        elif regime == "BEARING_VALVE_KNOCK":
+            self.fault_cause = "BEARING_VALVE_KNOCK"
+            self.anomaly_score = 0.92
+        elif regime == "CRITICAL_OVERPRESSURE":
+            self.fault_cause = "PRESSURE_SURGE"
+            self.pressure = min(self.pressure, 35.0)
+            self.anomaly_score = 0.75
+        elif regime == "THERMAL_OVERHEAT":
+            self.fault_cause = "THERMAL_OVERHEAT"
+            self.temperature = max(self.temperature, 55.0)
+            self.anomaly_score = 0.88
 
     def manual_start(self):
         """Manually arms the relay and starts the compressor."""

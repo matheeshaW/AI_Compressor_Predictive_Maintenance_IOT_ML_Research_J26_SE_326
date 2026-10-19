@@ -149,6 +149,9 @@ with st.sidebar:
                 st.error("Failed to send CMD:RESET over serial")
         else:
             st.session_state.simulator.reset_interlock()
+            st.session_state["active_fault_regime"] = "NOMINAL"
+            st.session_state["c03_active_payload"] = None
+            st.session_state["c03_active_scenario"] = None
             st.toast("Simulator: Interlock cleared to NOMINAL")
         st.rerun()
 
@@ -162,7 +165,7 @@ with st.sidebar:
         else:
             btn_txt = "🎯 Zero Pressure (0 PSI)" if tare_offset == 0.0 else f"🎯 Tared (-{tare_offset:.1f} PSI)"
 
-        if st.button(btn_txt, use_container_width=True, help="Tare pressure sensor offset to 0.0 PSI in open air"):
+        if st.button(btn_txt, width='stretch', help="Tare pressure sensor offset to 0.0 PSI in open air"):
             st.session_state["pressure_tared"] = True
             if is_live and st.session_state.serial_client.is_connected:
                 st.session_state.serial_client.send_command("CMD:TARE_P")
@@ -173,7 +176,7 @@ with st.sidebar:
                 st.toast(f"Simulator: Pressure zeroed (offset: -{curr_raw:.2f} PSI)")
             st.rerun()
     with cal_col2:
-        if st.button("↺ Reset Tare", use_container_width=True, help="Revert pressure calibration to factory offset"):
+        if st.button("↺ Reset Tare", width='stretch', help="Revert pressure calibration to factory offset"):
             st.session_state["pressure_tared"] = False
             st.session_state["pressure_tare_psi"] = 0.0
             if is_live and st.session_state.serial_client.is_connected:
@@ -193,23 +196,38 @@ with st.sidebar:
     with f_col1:
         if st.button("🟢 Nominal Run", width='stretch'):
             st.session_state.simulator.set_fault_regime("NOMINAL")
+            st.session_state["active_fault_regime"] = "NOMINAL"
+            st.session_state["c03_active_payload"] = None
+            st.session_state["c03_active_scenario"] = None
             st.toast("Operating regime set to NOMINAL")
 
         if st.button("💨 Air Leak Fault", width='stretch'):
             st.session_state.simulator.set_fault_regime("AIR_LEAK")
+            st.session_state["active_fault_regime"] = "AIR_LEAK"
+            st.session_state["c03_active_payload"] = None
+            st.session_state["c03_active_scenario"] = None
             st.toast("Injected Pneumatic Air Leak!")
 
     with f_col2:
         if st.button("🔨 Bearing Knock", width='stretch'):
             st.session_state.simulator.set_fault_regime("BEARING_VALVE_KNOCK")
+            st.session_state["active_fault_regime"] = "BEARING_VALVE_KNOCK"
+            st.session_state["c03_active_payload"] = None
+            st.session_state["c03_active_scenario"] = None
             st.toast("Injected Mechanical Bearing Knock!")
 
         if st.button("🚨 Overpressure", width='stretch'):
             st.session_state.simulator.set_fault_regime("CRITICAL_OVERPRESSURE")
+            st.session_state["active_fault_regime"] = "CRITICAL_OVERPRESSURE"
+            st.session_state["c03_active_payload"] = None
+            st.session_state["c03_active_scenario"] = None
             st.toast("Injected Pressure Ramp -> Overpressure Cutoff!")
 
     if st.button("🔥 Thermal Overheat", width='stretch'):
         st.session_state.simulator.set_fault_regime("THERMAL_OVERHEAT")
+        st.session_state["active_fault_regime"] = "THERMAL_OVERHEAT"
+        st.session_state["c03_active_payload"] = None
+        st.session_state["c03_active_scenario"] = None
         st.toast("Injected Thermal Overheating!")
 
     st.markdown("---")
@@ -228,6 +246,9 @@ with st.sidebar:
             st.session_state.history = []
             st.session_state.total_steps = 0
             st.session_state.simulator = CompressorTelemetrySimulator()
+            st.session_state["active_fault_regime"] = "NOMINAL"
+            st.session_state["c03_active_payload"] = None
+            st.session_state["c03_active_scenario"] = None
             st.rerun()
 
     # CSV Download
