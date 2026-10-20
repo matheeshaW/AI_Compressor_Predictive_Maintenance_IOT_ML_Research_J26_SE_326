@@ -14,6 +14,7 @@ Integrates All 4 Research Components:
 import os
 import sys
 import time
+import textwrap
 from pathlib import Path
 import pandas as pd
 import streamlit as st
@@ -47,7 +48,7 @@ from views.c04_prescriptive_view import render_c04_view
 THEME_CSS_PATH = os.path.join(DASHBOARD_DIR, "styles", "theme.css")
 if os.path.exists(THEME_CSS_PATH):
     with open(THEME_CSS_PATH, "r", encoding="utf-8") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+        st.markdown(textwrap.dedent(f"<style>{f.read()}</style>"), unsafe_allow_html=True)
 
 # Initialize Session State
 if "simulator" not in st.session_state:
@@ -146,6 +147,9 @@ with st.sidebar:
                 st.error("Failed to send CMD:RESET over serial")
         else:
             st.session_state.simulator.reset_interlock()
+            st.session_state["active_fault_regime"] = "NOMINAL"
+            st.session_state["c03_active_payload"] = None
+            st.session_state["c03_active_scenario"] = None
             st.toast("Simulator: Interlock cleared to NOMINAL")
         st.rerun()
 
@@ -190,27 +194,42 @@ with st.sidebar:
     with f_col1:
         if st.button("🟢 Nominal Run", key="btn_fault_nominal_sidebar", use_container_width=True):
             st.session_state.simulator.set_fault_regime("NOMINAL")
+            st.session_state["active_fault_regime"] = "NOMINAL"
+            st.session_state["c03_active_payload"] = None
+            st.session_state["c03_active_scenario"] = None
             st.toast("Operating regime set to NOMINAL")
             st.rerun()
 
         if st.button("💨 Air Leak Fault", key="btn_fault_air_leak_sidebar", use_container_width=True):
             st.session_state.simulator.set_fault_regime("AIR_LEAK")
+            st.session_state["active_fault_regime"] = "AIR_LEAK"
+            st.session_state["c03_active_payload"] = None
+            st.session_state["c03_active_scenario"] = None
             st.toast("Injected Pneumatic Air Leak!")
             st.rerun()
 
     with f_col2:
         if st.button("🔨 Bearing Knock", key="btn_fault_bearing_knock_sidebar", use_container_width=True):
             st.session_state.simulator.set_fault_regime("BEARING_VALVE_KNOCK")
+            st.session_state["active_fault_regime"] = "BEARING_VALVE_KNOCK"
+            st.session_state["c03_active_payload"] = None
+            st.session_state["c03_active_scenario"] = None
             st.toast("Injected Mechanical Bearing Knock!")
             st.rerun()
 
         if st.button("🚨 Overpressure", key="btn_fault_overpressure_sidebar", use_container_width=True):
             st.session_state.simulator.set_fault_regime("CRITICAL_OVERPRESSURE")
+            st.session_state["active_fault_regime"] = "CRITICAL_OVERPRESSURE"
+            st.session_state["c03_active_payload"] = None
+            st.session_state["c03_active_scenario"] = None
             st.toast("Injected Pressure Ramp -> Overpressure Cutoff!")
             st.rerun()
 
     if st.button("🔥 Thermal Overheat", key="btn_fault_overheat_sidebar", use_container_width=True):
         st.session_state.simulator.set_fault_regime("THERMAL_OVERHEAT")
+        st.session_state["active_fault_regime"] = "THERMAL_OVERHEAT"
+        st.session_state["c03_active_payload"] = None
+        st.session_state["c03_active_scenario"] = None
         st.toast("Injected Thermal Overheating!")
         st.rerun()
 
@@ -231,6 +250,9 @@ with st.sidebar:
             st.session_state.history = []
             st.session_state.total_steps = 0
             st.session_state.simulator = CompressorTelemetrySimulator()
+            st.session_state["active_fault_regime"] = "NOMINAL"
+            st.session_state["c03_active_payload"] = None
+            st.session_state["c03_active_scenario"] = None
             st.rerun()
 
     # CSV Download
@@ -242,7 +264,7 @@ with st.sidebar:
             data=csv_data,
             file_name=f"compressor_telemetry_session_{int(time.time())}.csv",
             mime="text/csv",
-            use_container_width=True
+            width='stretch'
         )
 
     st.markdown("---")
@@ -357,3 +379,4 @@ else:
 if auto_stream and st.session_state.is_running:
     time.sleep(refresh_rate)
     st.rerun()
+

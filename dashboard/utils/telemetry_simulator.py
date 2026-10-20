@@ -51,7 +51,6 @@ class CompressorTelemetrySimulator:
             self.anomaly_score = 0.85
             self.temperature = max(self.temperature, 68.0)
 
-
     def manual_start(self):
         """Manually arms the relay and starts the compressor."""
         self.relay_state = "ENERGIZED_CLOSED"

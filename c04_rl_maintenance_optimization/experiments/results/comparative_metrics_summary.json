@@ -1,0 +1,47 @@
+[
+  {
+    "policy_name": "RunToFailurePolicy",
+    "num_episodes": 500,
+    "total_maintenance_cost": 12444400.0,
+    "mean_maintenance_cost": 24888.8,
+    "std_maintenance_cost": 8262.938615286937,
+    "cumulative_downtime_hours": 61744.0,
+    "mean_downtime_hours": 123.488,
+    "std_downtime_hours": 40.962737408527765,
+    "catastrophic_failure_prevention_rate": 1.4000000000000001,
+    "total_failure_events": 963,
+    "episodes_zero_failure": 7,
+    "mean_reward": 31949.997208832032,
+    "evaluation_time_seconds": 15.253725051879883
+  },
+  {
+    "policy_name": "PeriodicMaintenancePolicy",
+    "num_episodes": 500,
+    "total_maintenance_cost": 8405400.0,
+    "mean_maintenance_cost": 16810.8,
+    "std_maintenance_cost": 4612.0844918539815,
+    "cumulative_downtime_hours": 41904.0,
+    "mean_downtime_hours": 83.808,
+    "std_downtime_hours": 22.589801592754196,
+    "catastrophic_failure_prevention_rate": 77.2,
+    "total_failure_events": 123,
+    "episodes_zero_failure": 386,
+    "mean_reward": 40536.685828278285,
+    "evaluation_time_seconds": 15.824995756149292
+  },
+  {
+    "policy_name": "DQNAgent",
+    "num_episodes": 500,
+    "total_maintenance_cost": 7078800.0,
+    "mean_maintenance_cost": 14157.6,
+    "std_maintenance_cost": 4621.718537513941,
+    "cumulative_downtime_hours": 35274.0,
+    "mean_downtime_hours": 70.548,
+    "std_downtime_hours": 22.59335512932951,
+    "catastrophic_failure_prevention_rate": 79.60000000000001,
+    "total_failure_events": 120,
+    "episodes_zero_failure": 398,
+    "mean_reward": 43576.16938445627,
+    "evaluation_time_seconds": 37.78586483001709
+  }
+]
