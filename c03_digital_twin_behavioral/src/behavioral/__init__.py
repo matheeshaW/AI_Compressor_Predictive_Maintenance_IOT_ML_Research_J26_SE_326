@@ -1,8 +1,5 @@
 """
-src/behavioral/__init__.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Package interface exposing state-conditioned profiling and degradation tracking.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+State-conditioned behavioral envelope profiling and degradation tracking sub-package.
 """
 
 from .state_behavioral_profiler import (

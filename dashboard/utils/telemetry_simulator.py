@@ -27,9 +27,45 @@ class CompressorTelemetrySimulator:
     def set_fault_regime(self, regime: str):
         """Injects a specific operational regime or fault mode."""
         self.active_regime = regime
+        # Automatically re-arm relay on fault switch to prevent getting stuck in trip state
+        self.relay_state = "ENERGIZED_CLOSED"
         if regime == "NOMINAL":
-            self.relay_state = "ENERGIZED_CLOSED"
             self.fault_cause = "NORMAL"
+            self.anomaly_score = 0.05
+        elif regime == "AIR_LEAK":
+            self.fault_cause = "PNEUMATIC_AIR_LEAK"
+            self.anomaly_score = 0.65
+        elif regime == "BEARING_VALVE_KNOCK":
+            self.fault_cause = "BEARING_VALVE_KNOCK"
+            self.anomaly_score = 0.92
+        elif regime == "CRITICAL_OVERPRESSURE":
+            self.fault_cause = "PRESSURE_SURGE"
+            self.pressure = min(self.pressure, 35.0)
+            self.anomaly_score = 0.75
+        elif regime == "THERMAL_OVERHEAT":
+            self.fault_cause = "THERMAL_OVERHEAT"
+            self.temperature = max(self.temperature, 55.0)
+            self.anomaly_score = 0.88
+
+    def manual_start(self):
+        """Manually arms the relay and starts the compressor."""
+        self.relay_state = "ENERGIZED_CLOSED"
+        self.fault_cause = "NORMAL"
+        self.active_regime = "NOMINAL"
+        self.anomaly_score = 0.05
+
+    def manual_stop(self):
+        """Manually trips the relay (E-Stop)."""
+        self.relay_state = "TRIPPED_OPEN"
+        self.fault_cause = "MANUAL_ESTOP"
+        self.anomaly_score = 0.0
+
+    def reset_interlock(self):
+        """Resets emergency interlock and returns machine to nominal armed state."""
+        self.relay_state = "ENERGIZED_CLOSED"
+        self.fault_cause = "NORMAL"
+        self.active_regime = "NOMINAL"
+        self.anomaly_score = 0.05
 
     def step(self) -> Dict[str, Any]:
         """Advances the physical simulation by one time step (~1.0s or frame step)."""
@@ -43,10 +79,10 @@ class CompressorTelemetrySimulator:
             motor_current = 0.0
             vibration_rms = 0.02
             vibration_kurtosis = 3.0
-            crest_factor = 2.1
+            crest_factor = 1.0
             acoustic_energy = 15.0
             dp_dt = -0.4
-            anomaly_score = 0.98
+            anomaly_score = 0.0 if self.fault_cause == "MANUAL_ESTOP" else 0.98
             return self._build_packet(t, motor_current, dp_dt, vibration_rms, vibration_kurtosis, crest_factor, acoustic_energy, anomaly_score)
 
         # Active physical dynamics based on regime

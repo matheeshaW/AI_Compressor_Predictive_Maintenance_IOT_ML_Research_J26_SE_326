@@ -36,7 +36,7 @@ class PythonFeatureExtractor:
             return 3.0
         mean = np.mean(signal)
         std = np.std(signal)
-        if std < 1e-5:
+        if std < 0.05:  # Stationary noise floor guard to prevent division by zero/noise
             return 3.0
         z = (signal - mean) / std
         return float(np.mean(np.power(z, 4)))
@@ -48,8 +48,8 @@ class PythonFeatureExtractor:
             return 0.0
         sig = signal - np.mean(signal) if zero_mean else signal
         rms = PythonFeatureExtractor.compute_rms(sig)
-        if rms < 1e-4:
-            return 0.0
+        if rms < 0.05:  # Stationary noise floor guard
+            return 1.0
         peak_abs = float(np.max(np.abs(sig)))
         return float(peak_abs / rms)
 
@@ -147,6 +147,15 @@ class TestDSPFeatureExtractor(unittest.TestCase):
         is_valid, msg = pipeline.validate_schema(df_features, contract_path)
         self.assertTrue(is_valid, f"Contract schema validation failed: {msg}")
         self.assertEqual(len(df_features), len(df_raw))
+
+    def test_stationary_noise_floor_guard(self):
+        """Sub-millivolt stationary ADC quantization noise floor must not blow up kurtosis."""
+        np.random.seed(42)
+        stationary_noise = np.random.normal(loc=9.81, scale=0.005, size=64)
+        kurt = PythonFeatureExtractor.compute_kurtosis(stationary_noise)
+        cf = PythonFeatureExtractor.compute_crest_factor(stationary_noise)
+        self.assertEqual(kurt, 3.0)
+        self.assertEqual(cf, 1.0)
 
 
 if __name__ == "__main__":

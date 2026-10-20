@@ -1,8 +1,5 @@
 """
-src/sync/time_series_aligner.py
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Multi-rate time-series temporal alignment, resampling, interpolation, and feature windowing.
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+Multi-rate time-series temporal alignment and linear resampling onto a uniform 25 Hz grid.
 """
 
 from dataclasses import dataclass
@@ -60,6 +57,7 @@ class TimeSeriesAligner:
     # Feature definitions for alignment strategy
     CONTINUOUS_FEATURES = [
         "pressure_psi",
+        "delta_pressure_dt",
         "motor_current_rms_a",
         "vibration_x_rms_ms2",
         "vibration_y_rms_ms2",
@@ -147,9 +145,11 @@ class TimeSeriesAligner:
         # Ensure forward-fill / backward-fill on boundaries
         merged = merged.ffill().bfill().infer_objects(copy=False)
 
-        # Compute dynamic first derivatives (dP/dt in PSI/sec)
+        # Compute dynamic first derivatives (dP/dt in PSI/sec) if not already present
         dt_seconds = self.interval_ms / 1000.0
-        if "pressure_psi" in merged.columns and len(merged) > 1:
+        if "delta_pressure_dt" in merged.columns and not merged["delta_pressure_dt"].isna().all() and (merged["delta_pressure_dt"].abs() > 1e-4).any():
+            pass  # Precomputed at the edge DSP or direct telemetry
+        elif "pressure_psi" in merged.columns and len(merged) > 1:
             merged["delta_pressure_dt"] = np.gradient(merged["pressure_psi"].values, dt_seconds)
         else:
             merged["delta_pressure_dt"] = 0.0
@@ -185,7 +185,7 @@ class TimeSeriesAligner:
                 timestamp_iso=f.timestamp_iso,
                 temperature_celsius=f.temperature_celsius,
                 pressure_psi=f.pressure_psi,
-                delta_pressure_dt=0.0,
+                delta_pressure_dt=f.delta_pressure_dt,
                 motor_current_rms_a=f.motor_current_rms_a,
                 vibration_x_rms_ms2=f.vibration_x_rms_ms2,
                 vibration_y_rms_ms2=f.vibration_y_rms_ms2,

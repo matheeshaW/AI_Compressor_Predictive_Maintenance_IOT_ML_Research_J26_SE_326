@@ -1,0 +1,11 @@
+# Component 04: Reinforcement Learning-Based Maintenance Optimization
+# Dependencies for Gymnasium simulation, PyTorch DQN, and evaluation
+gymnasium>=1.0.0
+torch>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+matplotlib>=3.7.0
+pandas>=2.0.0
+plotly>=5.18.0
+jsonschema>=4.17.0
+pytest>=7.0.0

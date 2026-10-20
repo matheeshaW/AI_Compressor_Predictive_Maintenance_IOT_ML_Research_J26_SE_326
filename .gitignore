@@ -21,11 +21,15 @@ build/
 .eggs/
 
 # Environments
-.env
-.venv
-env/
-venv/
-ENV/
+/.env
+/.venv
+/env/
+/venv/
+/ENV/
+!**/src/env/
+!**/src/env/**
+**/__pycache__/**
+
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints

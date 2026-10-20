@@ -86,7 +86,7 @@ class MultiModalDSPPipeline:
             if len(wx) >= 16:
                 mean_x = np.mean(wx)
                 std_x = np.std(wx)
-                if std_x > 1e-4:
+                if std_x >= 0.05:
                     # Pearson Kurtosis = E[(X - mu)^4] / sigma^4
                     z = (wx - mean_x) / std_x
                     vib_kurtosis[i] = np.mean(z**4)
@@ -96,7 +96,7 @@ class MultiModalDSPPipeline:
                     vib_crest_factor[i] = peak_dev / std_x
                 else:
                     vib_kurtosis[i] = 3.0
-                    vib_crest_factor[i] = 0.0
+                    vib_crest_factor[i] = 1.0
 
         out["vibration_x_rms_ms2"] = np.round(vib_x_rms, 3)
         out["vibration_y_rms_ms2"] = np.round(vib_y_rms, 3)

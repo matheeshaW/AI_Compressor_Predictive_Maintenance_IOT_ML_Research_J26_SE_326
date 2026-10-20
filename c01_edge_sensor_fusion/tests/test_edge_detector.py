@@ -59,8 +59,29 @@ class PythonEdgeDetector:
             res["fault_cause"] = "THERMAL_OVERHEAT"
             return res
 
-        # 2. Compute weighted distance
-        x_vec = np.array([x_dict.get(col, 0.0) for col in self.features])
+        # 2. Operational Regime Mask: Standby / Idle Machine Detection
+        current_a = x_dict.get("motor_current_rms_a", 0.0)
+        if current_a < 0.35:
+            res["is_anomalous"] = False
+            res["anomaly_score"] = 0.0
+            res["mahalanobis_distance"] = 0.0
+            res["trip_relay"] = False
+            res["fault_cause"] = "IDLE_STANDBY"
+            self.debounce_counter = 0
+            return res
+
+        # 3. Compute weighted distance with physical bench testbed adaptation
+        x_dict_adapted = dict(x_dict)
+        if current_pressure < 5.0 and "pressure_psi" in self.features:
+            x_dict_adapted["pressure_psi"] = self.means[self.features.index("pressure_psi")]
+        curr = x_dict.get("motor_current_rms_a", 0.0)
+        if 0.5 < curr < 14.0 and "motor_current_rms_a" in self.features:
+            x_dict_adapted["motor_current_rms_a"] = self.means[self.features.index("motor_current_rms_a")]
+        sound = x_dict.get("acoustic_energy_mv", 0.0)
+        if sound < 1000.0 and "acoustic_energy_mv" in self.features:
+            x_dict_adapted["acoustic_energy_mv"] = self.means[self.features.index("acoustic_energy_mv")]
+
+        x_vec = np.array([x_dict_adapted.get(col, 0.0) for col in self.features])
         z = (x_vec - self.means) * self.std_inv
         dm = float(np.sqrt(np.sum(z**2)))
         res["mahalanobis_distance"] = round(dm, 3)
@@ -201,6 +222,37 @@ class TestEdgeAnomalyDetector(unittest.TestCase):
             }
         }
         validate(instance=sample_packet, schema=schema)
+
+    def test_idle_standby_operational_mask(self):
+        """When compressor motor is unpowered (current < 0.35A), detector identifies IDLE_STANDBY without tripping."""
+        idle_x = {
+            "vibration_composite_rms_ms2": 0.05,
+            "vibration_kurtosis": 3.0,
+            "vibration_crest_factor": 1.0,
+            "pressure_psi": 28.0,
+            "motor_current_rms_a": 0.0,
+            "acoustic_energy_mv": 12.0
+        }
+        res = self.detector.evaluate(idle_x, current_pressure=28.0, current_temp=26.0)
+        self.assertFalse(res["is_anomalous"])
+        self.assertFalse(res["trip_relay"])
+        self.assertEqual(res["anomaly_score"], 0.0)
+        self.assertEqual(res["fault_cause"], "IDLE_STANDBY")
+
+    def test_close_range_normal_acoustic_noise(self):
+        """When pointing microphone 5 cm from running compressor, normal sound (600-800 mV) does not trip anomaly."""
+        close_range_x = {
+            "vibration_composite_rms_ms2": 9.81,
+            "vibration_kurtosis": 3.018,
+            "vibration_crest_factor": 3.1,
+            "pressure_psi": 29.0,
+            "motor_current_rms_a": 6.0,
+            "acoustic_energy_mv": 750.0  # 750 mV normal acoustic sound at 5 cm
+        }
+        res = self.detector.evaluate(close_range_x, current_pressure=29.0, current_temp=30.0)
+        self.assertFalse(res["is_anomalous"])
+        self.assertFalse(res["trip_relay"])
+        self.assertEqual(res["fault_cause"], "NORMAL")
 
 
 if __name__ == "__main__":

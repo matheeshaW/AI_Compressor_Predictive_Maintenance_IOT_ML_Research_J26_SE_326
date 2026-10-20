@@ -1,8 +1,5 @@
 """
-tests/test_sync_engine.py
-Unit tests verifying CircularTelemetryBuffer and TimeSeriesAligner.
-Component 03: Industrial Digital Twin & Behavioral Intelligence
-Researcher: Kahakotuwa K.N (IT23432284) - J26-SE-326
+Unit tests for CircularTelemetryBuffer and TimeSeriesAligner.
 """
 
 import os
