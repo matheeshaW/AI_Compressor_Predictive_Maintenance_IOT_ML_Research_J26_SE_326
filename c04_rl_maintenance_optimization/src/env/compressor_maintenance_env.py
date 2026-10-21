@@ -115,6 +115,48 @@ class CompressorMaintenanceEnv(gym.Env):
         )
         return np.clip(obs, self.observation_space.low, self.observation_space.high)
 
+    @classmethod
+    def observation_from_c03_payload(
+        cls,
+        payload: Dict[str, Any],
+        hours_since_last_maint: float = 0.0,
+        max_service_interval_hours: float = 500.0,
+    ) -> np.ndarray:
+        """
+        Transforms a digital twin state payload conforming to
+        shared/interfaces/c03_to_c04_twin_state_contract.json into the
+        canonical 8-dimensional continuous state representation s_t in S:
+            0: Composite Degradation index D_t in [0.0, 1.0]
+            1: Normalized RUL in [0.0, 1.0]
+            2: Behavioral Deviation index delta_t in [0.0, 10.0]
+            3: Operating pressure efficiency eta_t in [0.0, 1.0]
+            4: Component health / thermal dissipation theta_t in [0.0, 3.0]
+            5: Operating regime / fault class k_t in {0, 1, 2, 3, 4}
+            6: Anomaly persistence counter tau_t in [0.0, 1.0]
+            7: Elapsed cycle age since maintenance in [0.0, 1.0]
+        """
+        deg_metrics = payload.get("degradation_metrics", {})
+        beh_intel = payload.get("behavioral_intelligence", {})
+        op_state = payload.get("operating_state", {})
+
+        comp_d = float(np.clip(deg_metrics.get("composite_degradation_score", 0.0), 0.0, 1.0))
+        norm_rul = float(np.clip(1.0 - comp_d, 0.0, 1.0))
+        dev_idx = float(np.clip(beh_intel.get("deviation_index", 0.0), 0.0, 10.0))
+        press_eff = float(np.clip(deg_metrics.get("pressure_efficiency_ratio", 1.0), 0.0, 1.0))
+        therm_diss = float(np.clip(deg_metrics.get("thermal_dissipation_factor", 1.0), 0.0, 3.0))
+        regime = float(np.clip(op_state.get("cluster_id", 0), 0.0, 4.0))
+        drift = bool(beh_intel.get("drift_detected", False))
+        persist = 1.0 if drift else float(np.clip(beh_intel.get("persistence_counter", 0) / 5.0, 0.0, 1.0))
+        t_maint = float(np.clip(hours_since_last_maint / max_service_interval_hours, 0.0, 1.0))
+
+        obs = np.array(
+            [comp_d, norm_rul, dev_idx, press_eff, therm_diss, regime, persist, t_maint],
+            dtype=np.float32,
+        )
+        obs_low = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
+        obs_high = np.array([1.0, 1.0, 10.0, 1.0, 3.0, 4.0, 1.0, 1.0], dtype=np.float32)
+        return np.clip(obs, obs_low, obs_high)
+
     def reset(
         self,
         *,
