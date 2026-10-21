@@ -1,38 +1,85 @@
 /* ==========================================================================
-   AIR-GUARD Industrial APM Platform — Enterprise Glassmorphism Theme
+   AIR-GUARD Industrial APM Platform — Enterprise Google Material Theme
    High-Precision Turbomachinery Health & Digital Twin Architecture
+   Supports: Google Console Dark & Google Material Light Palettes
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Roboto:wght@300;400;500;700&display=swap');
 
+/* Default Theme: Google Cloud Console Dark */
 :root {
-    --bg-primary: #0A0E17;
-    --bg-secondary: #111827;
-    --bg-card: rgba(17, 24, 39, 0.75);
-    --bg-card-hover: rgba(30, 41, 59, 0.85);
-    --border-subtle: rgba(148, 163, 184, 0.15);
-    --border-accent: rgba(6, 182, 212, 0.4);
+    --bg-primary: #1A1D20;
+    --bg-secondary: #202124;
+    --bg-card: rgba(36, 40, 45, 0.85);
+    --bg-card-hover: rgba(44, 49, 54, 0.95);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-accent: rgba(138, 180, 248, 0.5);
+    --header-bg: rgba(32, 37, 43, 0.92);
+    --sidebar-bg: #1E2226;
     
-    --neon-cyan: #06B6D4;
-    --neon-blue: #3B82F6;
-    --neon-emerald: #10B981;
-    --neon-amber: #F59E0B;
-    --neon-rose: #EF4444;
-    --neon-violet: #8B5CF6;
+    --text-primary: #E8EAED;
+    --text-secondary: #9AA0A6;
+    --text-muted: #80868B;
+    
+    --google-blue: #8AB4F8;
+    --google-green: #81C995;
+    --google-amber: #FDD663;
+    --google-red: #F28B82;
+    --google-teal: #78D9EC;
+    --google-purple: #C58AF9;
 
-    --text-primary: #F8FAFC;
-    --text-secondary: #94A3B8;
-    --text-muted: #64748B;
-    
-    --font-heading: 'Outfit', sans-serif;
-    --font-body: 'Inter', sans-serif;
+    --neon-cyan: #78D9EC;
+    --neon-blue: #8AB4F8;
+    --neon-emerald: #81C995;
+    --neon-amber: #FDD663;
+    --neon-rose: #F28B82;
+    --neon-violet: #C58AF9;
+
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.5);
+
+    --font-heading: 'Outfit', 'Google Sans', sans-serif;
+    --font-body: 'Inter', 'Roboto', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Light Theme Variables: Google Material Clean */
+body.theme-light, [data-theme="light"], .theme-light {
+    --bg-primary: #F8F9FA;
+    --bg-secondary: #FFFFFF;
+    --bg-card: #FFFFFF;
+    --bg-card-hover: #F8F9FA;
+    --border-subtle: #DADCE0;
+    --border-accent: #1A73E8;
+    --header-bg: rgba(255, 255, 255, 0.96);
+    --sidebar-bg: #F1F3F4;
+    
+    --text-primary: #202124;
+    --text-secondary: #5F6368;
+    --text-muted: #80868B;
+    
+    --google-blue: #1A73E8;
+    --google-green: #1E8E3E;
+    --google-amber: #F9AB00;
+    --google-red: #D93025;
+    --google-teal: #007B83;
+    --google-purple: #9334E6;
+
+    --neon-cyan: #007B83;
+    --neon-blue: #1A73E8;
+    --neon-emerald: #1E8E3E;
+    --neon-amber: #F9AB00;
+    --neon-rose: #D93025;
+    --neon-violet: #9334E6;
+
+    --card-shadow: 0 1px 3px rgba(60,64,67,0.12), 0 1px 2px rgba(60,64,67,0.24);
+    --card-shadow-hover: 0 4px 12px rgba(60,64,67,0.18);
 }
 
 /* Base Body & App Container */
 html, body, [class*="stApp"] {
-    background: radial-gradient(circle at 15% 15%, #131D31 0%, #0A0E17 100%) !important;
     font-family: var(--font-body) !important;
+    background: var(--bg-primary) !important;
     color: var(--text-primary) !important;
 }
 
@@ -41,46 +88,53 @@ header[data-testid="stHeader"] {
     background: transparent !important;
 }
 
-/* Glassmorphism Cards */
+/* Sidebar Styling */
+section[data-testid="stSidebar"] {
+    background-color: var(--sidebar-bg) !important;
+    border-right: 1px solid var(--border-subtle) !important;
+}
+
+/* Glassmorphism & Material Cards */
 .glass-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--border-subtle);
+    background: var(--bg-card) !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border-subtle) !important;
     border-radius: 12px;
     padding: 1.25rem;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    transition: all 0.25s ease-in-out;
+    box-shadow: var(--card-shadow) !important;
+    transition: all 0.2s ease-in-out;
 }
 
 .glass-card:hover {
-    border-color: var(--border-accent);
-    box-shadow: 0 10px 40px 0 rgba(6, 182, 212, 0.15);
+    border-color: var(--border-accent) !important;
+    box-shadow: var(--card-shadow-hover) !important;
 }
 
 /* Industrial KPI Metric Card */
 .kpi-container {
-    background: rgba(15, 23, 42, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
     border-radius: 10px;
     padding: 1rem 1.25rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    box-shadow: var(--card-shadow) !important;
     transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .kpi-container:hover {
     transform: translateY(-2px);
-    border-color: var(--neon-cyan);
+    border-color: var(--border-accent) !important;
 }
 
 .kpi-title {
     font-family: var(--font-body);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     color: var(--text-secondary);
 }
 
@@ -114,28 +168,28 @@ header[data-testid="stHeader"] {
 }
 
 .badge-normal {
-    background: rgba(16, 185, 129, 0.15);
+    background: rgba(30, 142, 62, 0.15);
     color: var(--neon-emerald);
-    border: 1px solid rgba(16, 185, 129, 0.35);
+    border: 1px solid rgba(30, 142, 62, 0.35);
 }
 
 .badge-warning {
-    background: rgba(245, 158, 11, 0.15);
+    background: rgba(249, 171, 0, 0.15);
     color: var(--neon-amber);
-    border: 1px solid rgba(245, 158, 11, 0.35);
+    border: 1px solid rgba(249, 171, 0, 0.35);
 }
 
 .badge-danger {
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(217, 48, 37, 0.18);
     color: var(--neon-rose);
-    border: 1px solid rgba(239, 68, 68, 0.5);
+    border: 1px solid rgba(217, 48, 37, 0.45);
     animation: pulse-danger 1.5s infinite;
 }
 
 @keyframes pulse-danger {
-    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
-    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(217, 48, 37, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(217, 48, 37, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(217, 48, 37, 0); }
 }
 
 /* Pulsing LED status dot */
@@ -157,6 +211,11 @@ header[data-testid="stHeader"] {
     animation: blink-led 0.8s infinite;
 }
 
+.led-amber {
+    background-color: var(--neon-amber);
+    box-shadow: 0 0 8px var(--neon-amber);
+}
+
 @keyframes blink-led {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.2; }
@@ -164,7 +223,7 @@ header[data-testid="stHeader"] {
 
 /* Emergency Safety Banner */
 .emergency-banner {
-    background: linear-gradient(90deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.35) 100%);
+    background: linear-gradient(90deg, rgba(217, 48, 37, 0.15) 0%, rgba(217, 48, 37, 0.25) 100%);
     border: 1px solid var(--neon-rose);
     border-radius: 10px;
     padding: 0.9rem 1.25rem;
@@ -172,20 +231,15 @@ header[data-testid="stHeader"] {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    animation: banner-glow 2s infinite alternate;
-}
-
-@keyframes banner-glow {
-    from { box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
-    to { box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); }
+    box-shadow: 0 2px 10px rgba(217, 48, 37, 0.2);
 }
 
 /* Tab Overrides */
 .stTabs [data-baseweb="tab-list"] {
-    background: rgba(15, 23, 42, 0.6);
+    background: var(--bg-card) !important;
     border-radius: 10px;
     padding: 4px;
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-subtle) !important;
     gap: 6px;
 }
 
@@ -194,15 +248,23 @@ header[data-testid="stHeader"] {
     padding: 8px 18px !important;
     color: var(--text-secondary) !important;
     font-weight: 500 !important;
-    font-size: 0.9rem !important;
+    font-size: 0.88rem !important;
     transition: all 0.2s ease !important;
 }
 
 .stTabs [aria-selected="true"] {
-    background: rgba(6, 182, 212, 0.18) !important;
-    color: var(--neon-cyan) !important;
+    background: rgba(26, 115, 232, 0.12) !important;
+    color: var(--google-blue) !important;
     font-weight: 700 !important;
-    border-bottom: 2px solid var(--neon-cyan) !important;
+    border-bottom: 2px solid var(--google-blue) !important;
+}
+
+/* Streamlit Button Overrides */
+.stButton > button {
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    font-family: var(--font-body) !important;
+    transition: all 0.2s ease !important;
 }
 
 /* Custom Scrollbars */
@@ -211,28 +273,27 @@ header[data-testid="stHeader"] {
     height: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: #0A0E17;
+    background: var(--bg-primary);
 }
 ::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: var(--border-subtle);
     border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #06B6D4;
+    background: var(--border-accent);
 }
 
-/* C02 Compatibility Badges */
+/* Metric Subtext & Badges */
 .kpi-sub {
     font-size: 0.80rem;
     color: var(--text-muted);
 }
 
 .badge-alert {
-    background: rgba(255, 82, 82, 0.15);
+    background: rgba(217, 48, 37, 0.15);
     color: var(--neon-rose);
-    border: 1px solid rgba(255, 82, 82, 0.3);
+    border: 1px solid rgba(217, 48, 37, 0.35);
     padding: 3px 10px;
     border-radius: 6px;
     font-size: 0.75rem;
 }
-

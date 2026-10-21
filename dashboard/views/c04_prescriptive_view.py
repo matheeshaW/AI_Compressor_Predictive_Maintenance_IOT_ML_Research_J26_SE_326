@@ -253,11 +253,20 @@ def extract_observation_vector(
         # Base observation constructed directly from the C03 JSON contract
         step_num = int(current_packet.get("step", 1))
         cycle_idx = int(meta.get("twin_cycle_index", step_num))
-        obs = CompressorMaintenanceEnv.observation_from_c03_payload(
-            c03_payload,
-            hours_since_last_maint=float((cycle_idx % 100) * 4.0),
-            max_service_interval_hours=500.0,
-        )
+        if CompressorMaintenanceEnv is not None and hasattr(CompressorMaintenanceEnv, "observation_from_c03_payload"):
+            obs = CompressorMaintenanceEnv.observation_from_c03_payload(
+                c03_payload,
+                hours_since_last_maint=float((cycle_idx % 100) * 4.0),
+                max_service_interval_hours=500.0,
+            )
+        else:
+            c03_deg = float(deg_metrics.get("composite_degradation_score", 0.05))
+            c_ratio = float(deg_metrics.get("pressure_efficiency_ratio", 0.95))
+            dev_idx = float(beh_intel.get("deviation_index", 0.0))
+            k_val = 0.0
+            p_val = 0.0
+            tau_val = float((cycle_idx % 100) * 4.0) / 500.0
+            obs = np.array([c03_deg, 1.0 - c03_deg, dev_idx, c_ratio, tau_val, k_val, p_val], dtype=np.float32)
 
         c03_deg = float(deg_metrics.get("composite_degradation_score", 0.05))
 

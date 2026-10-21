@@ -44,12 +44,119 @@ from views.c01_edge_telemetry_view import render_c01_view
 from views.c02_predictive_view import render_c02_view
 from views.c03_digital_twin_view import render_c03_view
 from views.c04_prescriptive_view import render_c04_view
+from views.unified_system_view import render_unified_system_view
 
-# Load and inject custom dark glassmorphism CSS
+# Initialize Theme State
+if "theme_choice" not in st.session_state:
+    st.session_state["theme_choice"] = "Google Dark (Console)"
+
+# Load Base CSS
 THEME_CSS_PATH = os.path.join(DASHBOARD_DIR, "styles", "theme.css")
 if os.path.exists(THEME_CSS_PATH):
     with open(THEME_CSS_PATH, "r", encoding="utf-8") as f:
-        st.markdown(textwrap.dedent(f"<style>{f.read()}</style>"), unsafe_allow_html=True)
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+# Inject dynamic theme palette overrides based on user choice
+is_light = (st.session_state.get("theme_choice") == "Google Light (Material)")
+if is_light:
+    st.markdown("""
+    <style>
+    :root {
+        --bg-primary: #F8F9FA !important;
+        --bg-secondary: #FFFFFF !important;
+        --bg-card: #FFFFFF !important;
+        --bg-card-hover: #F8F9FA !important;
+        --border-subtle: #DADCE0 !important;
+        --border-accent: #1A73E8 !important;
+        --header-bg: rgba(255, 255, 255, 0.96) !important;
+        --sidebar-bg: #F1F3F4 !important;
+        --text-primary: #202124 !important;
+        --text-secondary: #5F6368 !important;
+        --text-muted: #80868B !important;
+        --google-blue: #1A73E8 !important;
+        --google-green: #1E8E3E !important;
+        --google-amber: #F9AB00 !important;
+        --google-red: #D93025 !important;
+        --google-teal: #007B83 !important;
+        --google-purple: #9334E6 !important;
+        --neon-cyan: #007B83 !important;
+        --neon-blue: #1A73E8 !important;
+        --neon-emerald: #1E8E3E !important;
+        --neon-amber: #F9AB00 !important;
+        --neon-rose: #D93025 !important;
+        --neon-violet: #9334E6 !important;
+        --card-shadow: 0 1px 3px rgba(60,64,67,0.12), 0 1px 2px rgba(60,64,67,0.24) !important;
+        --card-shadow-hover: 0 4px 12px rgba(60,64,67,0.18) !important;
+    }
+    html, body, [class*="stApp"] {
+        background: #F8F9FA !important;
+        color: #202124 !important;
+    }
+    section[data-testid="stSidebar"] {
+        background-color: #F1F3F4 !important;
+        border-right: 1px solid #DADCE0 !important;
+    }
+    .stMarkdown, p, span, label, h1, h2, h3, h4, h5 {
+        color: #202124;
+    }
+    div[data-testid="stExpander"] {
+        background: #FFFFFF !important;
+        border: 1px solid #DADCE0 !important;
+        border-radius: 8px !important;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        background: #FFFFFF !important;
+        border: 1px solid #DADCE0 !important;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #5F6368 !important;
+    }
+    .stTabs [aria-selected="true"] {
+        background: rgba(26, 115, 232, 0.1) !important;
+        color: #1A73E8 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <style>
+    :root {
+        --bg-primary: #1A1D20 !important;
+        --bg-secondary: #202124 !important;
+        --bg-card: rgba(36, 40, 45, 0.90) !important;
+        --bg-card-hover: rgba(44, 49, 54, 0.95) !important;
+        --border-subtle: rgba(255, 255, 255, 0.08) !important;
+        --border-accent: rgba(138, 180, 248, 0.5) !important;
+        --header-bg: rgba(32, 37, 43, 0.94) !important;
+        --sidebar-bg: #1E2226 !important;
+        --text-primary: #E8EAED !important;
+        --text-secondary: #9AA0A6 !important;
+        --text-muted: #80868B !important;
+        --google-blue: #8AB4F8 !important;
+        --google-green: #81C995 !important;
+        --google-amber: #FDD663 !important;
+        --google-red: #F28B82 !important;
+        --google-teal: #78D9EC !important;
+        --google-purple: #C58AF9 !important;
+        --neon-cyan: #78D9EC !important;
+        --neon-blue: #8AB4F8 !important;
+        --neon-emerald: #81C995 !important;
+        --neon-amber: #FDD663 !important;
+        --neon-rose: #F28B82 !important;
+        --neon-violet: #C58AF9 !important;
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+        --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+    }
+    html, body, [class*="stApp"] {
+        background: radial-gradient(circle at 15% 15%, #23272C 0%, #15181B 100%) !important;
+        color: #E8EAED !important;
+    }
+    section[data-testid="stSidebar"] {
+        background-color: #1A1D20 !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # Initialize Session State
 if "simulator" not in st.session_state:
@@ -288,22 +395,39 @@ with st.sidebar:
     st.markdown("##### System Intelligence Modules")
     presentation_mode = st.radio(
         "Presentation Mode:",
-        ["Unified Dashboard (All Modules)", "Focused Module View"],
-        index=0
+        ["Unified System Cockpit (All-in-One)", "Modular Deep-Dive Views"],
+        index=0,
+        help="Switch between the unified real-time industrial cockpit and individual module deep-dive analytics"
     )
 
     selected_component = None
-    if presentation_mode == "Focused Module View":
+    if presentation_mode == "Modular Deep-Dive Views":
         selected_component = st.selectbox(
-            "Select Module View",
+            "Select Deep-Dive View:",
             [
+                "All Modules (Tabbed Deep-Dive)",
                 "Module 01: High-Frequency Edge Sensing & DSP",
                 "Module 02: Predictive AI Diagnostics & RUL",
                 "Module 03: Industrial Digital Twin & State Space",
                 "Module 04: Prescriptive Policy Optimization"
             ],
-            index=2
+            index=0
         )
+
+    st.markdown("---")
+
+    # 6. Interface Styling & Theme
+    st.markdown("##### Interface Styling")
+    theme_choice = st.radio(
+        "Color Palette:",
+        ["Google Dark (Console)", "Google Light (Material)"],
+        index=0 if st.session_state.get("theme_choice", "Google Dark (Console)") == "Google Dark (Console)" else 1,
+        horizontal=True,
+        key="theme_radio"
+    )
+    if theme_choice != st.session_state.get("theme_choice"):
+        st.session_state["theme_choice"] = theme_choice
+        st.rerun()
 
 
 # DATA INGESTION & DISPATCH
@@ -358,36 +482,40 @@ render_header(
 fault_cause = current_packet.get("fault_cause", "NORMAL") if current_packet else "NORMAL"
 render_alert_banner(is_tripped=is_tripped, fault_cause=fault_cause, is_anomalous=is_anomalous, latency_us=7.12)
 
-# 3. View Routing (Unified System Tabs OR Focused Module View)
-if presentation_mode == "Focused Module View" and selected_component is not None:
-    if "Module 01" in selected_component or "C01" in selected_component:
+# 3. View Routing (Unified System Cockpit OR Modular Deep-Dive Views)
+is_dark = (st.session_state.get("theme_choice", "Google Dark (Console)") == "Google Dark (Console)")
+
+if presentation_mode == "Unified System Cockpit (All-in-One)":
+    render_unified_system_view(current_packet, history_df, is_dark=is_dark)
+elif presentation_mode == "Modular Deep-Dive Views":
+    if selected_component == "Module 01: High-Frequency Edge Sensing & DSP":
         render_c01_view(current_packet, history_df)
-    elif "Module 02" in selected_component or "C02" in selected_component:
+    elif selected_component == "Module 02: Predictive AI Diagnostics & RUL":
         render_c02_view(current_packet, history_df)
-    elif "Module 03" in selected_component or "C03" in selected_component:
+    elif selected_component == "Module 03: Industrial Digital Twin & State Space":
         render_c03_view(current_packet, history_df)
-    elif "Module 04" in selected_component or "C04" in selected_component:
+    elif selected_component == "Module 04: Prescriptive Policy Optimization":
         render_c04_view(current_packet, history_df)
-else:
-    # Enterprise Navigation Tabs (Unified master view combining all platform modules)
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "Module 01: High-Frequency Edge & DSP",
-        "Module 02: Predictive AI & RUL Prognostics",
-        "Module 03: Industrial Digital Twin",
-        "Module 04: Prescriptive Policy Engine"
-    ])
+    else:
+        # All Modules (Tabbed Deep-Dive)
+        tab1, tab2, tab3, tab4 = st.tabs([
+            "Module 01: High-Frequency Edge & DSP",
+            "Module 02: Predictive AI & RUL Prognostics",
+            "Module 03: Industrial Digital Twin",
+            "Module 04: Prescriptive Policy Engine"
+        ])
 
-    with tab1:
-        render_c01_view(current_packet, history_df)
+        with tab1:
+            render_c01_view(current_packet, history_df)
 
-    with tab2:
-        render_c02_view(current_packet, history_df)
+        with tab2:
+            render_c02_view(current_packet, history_df)
 
-    with tab3:
-        render_c03_view(current_packet, history_df)
+        with tab3:
+            render_c03_view(current_packet, history_df)
 
-    with tab4:
-        render_c04_view(current_packet, history_df)
+        with tab4:
+            render_c04_view(current_packet, history_df)
 
 
 # Continuous Live Auto-Stream Loop
