@@ -226,9 +226,12 @@ class IndustrialDigitalTwinEngine:
 
         # 6. Overall twin health status
         composite_score = float(m_dict["composite_degradation_score"])
-        if b_dict["deviation_classification"] == DeviationClassification.CRITICAL_DRIFT.value:
+        is_leak_state = (assignment.state_label == OperatingStateLabel.ANOMALOUS_LEAK_REGIME.value)
+        valves_leaking = bool(subsystems_dict.get("suction_discharge_valves", {}).get("valve_leakage_detected", False))
+
+        if b_dict["deviation_classification"] == DeviationClassification.CRITICAL_DRIFT.value or (is_leak_state and b_dict["drift_detected"]):
             twin_status = "CRITICAL"
-        elif b_dict["drift_detected"]:
+        elif b_dict["drift_detected"] or is_leak_state or valves_leaking:
             twin_status = "DEGRADED"
         elif b_dict["deviation_classification"] == DeviationClassification.TRANSIENT_PERTURBATION.value:
             twin_status = "WARNING"
