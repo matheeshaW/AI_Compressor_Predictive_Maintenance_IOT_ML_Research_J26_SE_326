@@ -1,0 +1,35 @@
+# ==============================================================================
+# AIR-GUARD: Industrial AI Predictive Maintenance & Autonomous APM Platform
+# Repository Root Master Dependencies
+# ==============================================================================
+
+# Core Computational & Data Foundations
+numpy>=1.24.0
+scipy>=1.10.0
+pandas>=2.0.0
+
+# Machine Learning, Clustering, & Deep Learning Engines
+scikit-learn>=1.3.0
+joblib>=1.3.0
+torch>=2.0.0
+xgboost>=1.7.0
+shap>=0.42.0
+
+# Reinforcement Learning & Simulation Environment
+gymnasium>=1.0.0
+
+# Hardware Serial & Data Contracts
+pyserial>=3.5
+jsonschema>=4.17.0
+pydantic>=2.4.0
+
+# Dashboard, Visualization & Enterprise Reporting
+streamlit>=1.30.0
+plotly>=5.18.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Quality Assurance & Testing Suite
+pytest>=7.4.0
+requests>=2.28.0
+tqdm>=4.64.0
