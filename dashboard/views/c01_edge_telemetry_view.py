@@ -19,10 +19,10 @@ def render_c01_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
     
     hdr_c1, hdr_c2 = st.columns([3.5, 1.5])
     with hdr_c1:
-        st.markdown("### 📡 Component 01: Multi-Modal Edge Sensing & Real-Time DSP Telemetry")
+        st.markdown("### Module 01: High-Frequency Multi-Modal Edge Sensing & DSP Telemetry")
         st.markdown(
-            "*Real-time embedded telemetry acquired via dual-rate DMA on ESP32-S3 (Xtensa LX7 @ 240 MHz). "
-            "Evaluates sliding-window DSP features and executes sub-50ms relay emergency cutoffs.*"
+            "*Hardware-level telemetry acquired via dual-rate DMA sampling on ESP32-S3 (Xtensa LX7 @ 240 MHz). "
+            "Evaluates deterministic sliding-window DSP feature extraction with sub-millisecond edge safety interlock execution.*"
         )
     with hdr_c2:
         is_live = (st.session_state.telemetry_mode == "Live Serial (ESP32-S3)")
@@ -30,7 +30,7 @@ def render_c01_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
         tare_offset = st.session_state.get("pressure_tare_psi", 0.0)
         is_zeroed = tare_active if is_live else (tare_offset > 0.0)
 
-        btn_txt = "🎯 Tare Pressure (0 PSI)" if not is_zeroed else "↺ Reset Tare (Calibrated)"
+        btn_txt = "Tare Pressure (0 PSI)" if not is_zeroed else "Reset Tare (Calibrated)"
         if st.button(btn_txt, key="btn_tare_c01", use_container_width=True, help="Tare pressure sensor offset to 0.0 PSI in open air"):
             if not is_zeroed:
                 st.session_state["pressure_tared"] = True
@@ -86,7 +86,7 @@ def render_c01_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
     g_col1, g_col2, g_col3 = st.columns([1, 1, 1.2])
 
     with g_col1:
-        st.markdown("##### 🎛️ Kurtosis Shock Indicator")
+        st.markdown("##### Kurtosis Impulsive Shock Index")
         fig_kurt = go.Figure(go.Indicator(
             mode="gauge+number",
             value=kurt,
@@ -111,7 +111,7 @@ def render_c01_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
         st.caption("Threshold $K > 7.5$ triggers instantaneous bearing knock warning.")
 
     with g_col2:
-        st.markdown("##### 🎯 Crest Factor Dynamic Ratio")
+        st.markdown("##### Crest Factor Dynamic Impact Ratio")
         cf = current_packet.get("vibration_crest_factor", 3.0)
         fig_cf = go.Figure(go.Indicator(
             mode="gauge+number",
@@ -137,7 +137,7 @@ def render_c01_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
         st.caption("Ratio of peak impact acceleration to continuous RMS vibration.")
 
     with g_col3:
-        st.markdown("##### 🛡️ Edge Anomaly & Relay Status")
+        st.markdown("##### Edge Anomaly Classification & Relay Status")
         score = current_packet.get("anomaly_score", 0.0)
         relay_state = current_packet.get("relay_state", "ENERGIZED_CLOSED")
         fault = current_packet.get("fault_cause", "NORMAL")
@@ -146,7 +146,7 @@ def render_c01_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
         relay_color = '#EF4444' if 'TRIPPED' in relay_state else '#10B981'
         status_card_html = f"""<div style="background: rgba(17, 24, 39, 0.85); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 1.1rem; height: 220px; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-                <div style="font-size: 0.75rem; color: #94A3B8; text-transform: uppercase;">Continuous Anomaly Score S(D_M)</div>
+                <div style="font-size: 0.75rem; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em;">Continuous Anomaly Score S(D_M)</div>
                 <div style="font-family: 'JetBrains Mono', monospace; font-size: 2.1rem; font-weight: 800; color: {score_color};">
                     {score:.3f} <span style="font-size: 0.85rem; color: #94A3B8;">/ 1.000</span>
                 </div>
@@ -167,7 +167,7 @@ def render_c01_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
     st.markdown("---")
 
     # 3. Live Synchronized Waveforms
-    st.markdown("##### 📈 Real-Time Multi-Modal Telemetry Streams")
+    st.markdown("##### Synchronized Multi-Modal Waveform Telemetry")
     if not history_df.empty:
         fig_wave = make_subplots(
             rows=2, cols=2,
@@ -222,10 +222,10 @@ def render_c01_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
 
     # 4. Empirical Model Benchmark Comparison (20,000 Samples)
     st.markdown("---")
-    st.markdown("##### 🔬 Embedded Edge Intelligence: Empirical Model Benchmarks (20,000 Samples)")
+    st.markdown("##### Embedded Edge Intelligence: Hardware-Level Model Benchmarks (20,000 Samples)")
     st.markdown(
-        "*Comparative performance of our proposed zero-allocation Statistical Mahalanobis Detector vs "
-        "Deep 1D Compression Autoencoder ($6 \\to 4 \\to 2 \\to 4 \\to 6$) on the calibrated compressor testbed dataset.*"
+        "*Comparative performance of zero-allocation Statistical Mahalanobis formulation vs "
+        "Deep 1D Neural Autoencoder ($6 \\to 4 \\to 2 \\to 4 \\to 6$) on the calibrated compressor testbed dataset.*"
     )
 
     bench_col1, bench_col2 = st.columns([1.8, 1.2])
@@ -268,11 +268,13 @@ def render_c01_view(current_packet: Dict[str, Any], history_df: pd.DataFrame):
 
     with bench_col2:
         st.markdown("""
-        <div class="glass-card" style="font-size: 0.85rem; line-height: 1.5;">
-            <div style="font-weight: 700; color: #10B981; margin-bottom: 0.4rem;">🎯 Academic Viva Key Takeaway</div>
-            <div>• <b>6.2x Faster Latency:</b> Mahalanobis executes in <b>7.28 µs</b> vs 45.25 µs for the neural autoencoder.</div>
-            <div style="margin-top: 0.3rem;">• <b>99.79% Less RAM:</b> Uses 52 bytes of static SRAM vs 24.5 KB tensor arena.</div>
-            <div style="margin-top: 0.3rem;">• <b>Fail-Safe Determinism:</b> Zero dynamic heap allocation guarantees the microcontroller will never experience heap fragmentation or crash during a critical overpressure cutoff.</div>
+        <div class="glass-card" style="font-size: 0.85rem; line-height: 1.5; border-left: 3px solid #10B981;">
+            <div style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 700; color: #10B981; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                Core Architectural Advantages & Edge Efficiency
+            </div>
+            <div>• <b>6.2x Lower Execution Latency:</b> Statistical Mahalanobis evaluates in <b>7.28 µs</b> vs 45.25 µs for the neural autoencoder baseline.</div>
+            <div style="margin-top: 0.35rem;">• <b>99.79% SRAM Memory Footprint Reduction:</b> Operates in 52 bytes of static memory vs 24.5 KB dynamic tensor arena.</div>
+            <div style="margin-top: 0.35rem;">• <b>Hard Real-Time Determinism:</b> Zero dynamic heap allocation (malloc-free) guarantees the bare-metal microcontroller will never suffer heap fragmentation or watchdog crashes during an emergency overpressure cutoff.</div>
         </div>
         """, unsafe_allow_html=True)
 

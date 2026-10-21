@@ -2,13 +2,14 @@
 """
 app.py
 ======
-Industrial AI Compressor Intelligence Platform — Next-Gen Unified Dashboard
-SLIIT 4th Year Research Project: J26-SE-326
-Integrates All 4 Research Components:
-- C01: Edge Sensing & DSP Waveforms (Matheesha)
-- C02: AI Predictive Maintenance & RUL (Herath)
-- C03: Industrial Digital Twin & Behavioral Intelligence (Kahakotuwa)
-- C04: RL Prescriptive Maintenance Policies (Liyanage)
+AIR-GUARD Industrial Asset Performance Management (APM) Platform
+Unified Turbomachinery Health Monitoring, Edge DSP & Digital Twin Intelligence
+
+Integrated Modules:
+- Module 01: High-Frequency Multi-Modal Edge Sensing & DSP Telemetry
+- Module 02: Predictive AI Diagnostics & RUL Prognostics Engine
+- Module 03: Industrial Digital Twin & Behavioral Intelligence
+- Module 04: Reinforcement Learning Prescriptive Maintenance Engine
 """
 
 import os
@@ -21,8 +22,8 @@ import streamlit as st
 
 # Configure Streamlit page settings
 st.set_page_config(
-    page_title="AIR-GUARD AI | Industrial Compressor Intelligence",
-    page_icon="⚡",
+    page_title="AIR-GUARD APM | Industrial Turbomachinery Intelligence",
+    page_icon="⚙️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -63,15 +64,15 @@ if "telemetry_mode" not in st.session_state:
     st.session_state.telemetry_mode = "Simulation Replay"
 
 
-# SIDEBAR CONTROLS & FAULT INJECTION RIG
+# SIDEBAR CONTROLS & OPERATIONAL CONSOLE
 with st.sidebar:
-    st.markdown("### 🎛️ Mission Control")
-    st.markdown("Configure operational inputs and trigger physical fault injections for live demonstrations.")
+    st.markdown("### Operational Control Console")
+    st.caption("Operational parameters, acquisition interface, and controlled perturbation injection.")
 
     # 1. Telemetry Source Toggle
-    st.markdown("##### 🔌 Telemetry Source")
+    st.markdown("##### Telemetry Acquisition Pipeline")
     mode = st.radio(
-        "Select Active Data Pipeline:",
+        "Select Active Pipeline:",
         ["Simulation Replay", "Live Serial (ESP32-S3)"],
         index=0 if st.session_state.telemetry_mode == "Simulation Replay" else 1
     )
@@ -82,7 +83,7 @@ with st.sidebar:
         selected_port = st.selectbox("Detected USB Serial COM Ports:", ports if ports else ["No Ports Detected"])
         col_c1, col_c2 = st.columns(2)
         with col_c1:
-            if st.button("🔗 Connect", key="btn_connect_serial", use_container_width=True, disabled=st.session_state.serial_client.is_connected):
+            if st.button("Connect Serial", key="btn_connect_serial", use_container_width=True, disabled=st.session_state.serial_client.is_connected):
                 if ports and selected_port != "No Ports Detected":
                     st.session_state.serial_client.close()
                     success = st.session_state.serial_client.connect(selected_port)
@@ -92,7 +93,7 @@ with st.sidebar:
                     else:
                         st.error(f"Cannot open {selected_port}. Close Arduino IDE Serial Monitor first!")
         with col_c2:
-            if st.button("🔌 Disconnect", key="btn_disconnect_serial", use_container_width=True, disabled=not st.session_state.serial_client.is_connected):
+            if st.button("Disconnect", key="btn_disconnect_serial", use_container_width=True, disabled=not st.session_state.serial_client.is_connected):
                 st.session_state.serial_client.close()
                 st.toast("Serial port closed.")
                 st.rerun()
@@ -100,15 +101,15 @@ with st.sidebar:
         if st.session_state.serial_client.is_connected:
             st.markdown(
                 f"""<div style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10B981; border-radius: 8px; padding: 0.45rem 0.75rem; margin-top: 0.5rem; text-align: center;">
-                    <span style="color: #10B981; font-weight: 700; font-size: 0.85rem;">🟢 ONLINE: {st.session_state.serial_client.port}</span><br>
-                    <span style="color: #94A3B8; font-size: 0.72rem; font-family: monospace;">115200 Baud | Zero-Lag Telemetry</span>
+                    <span style="color: #10B981; font-weight: 700; font-size: 0.85rem;">ONLINE: {st.session_state.serial_client.port}</span><br>
+                    <span style="color: #94A3B8; font-size: 0.72rem; font-family: monospace;">115200 Baud | Zero-Lag DMA Stream</span>
                 </div>""",
                 unsafe_allow_html=True
             )
         else:
             st.markdown(
                 """<div style="background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 0.45rem 0.75rem; margin-top: 0.5rem; text-align: center;">
-                    <span style="color: #94A3B8; font-weight: 600; font-size: 0.8rem;">⚪ PORT DISCONNECTED</span>
+                    <span style="color: #94A3B8; font-weight: 600; font-size: 0.8rem;">PORT DISCONNECTED</span>
                 </div>""",
                 unsafe_allow_html=True
             )
@@ -116,12 +117,12 @@ with st.sidebar:
     st.markdown("---")
 
     # 2. Hardware Actuator & Safety Interlock Control
-    st.markdown("##### ⚡ Actuator & Interlock Control")
-    st.caption("Direct hardware relay control & emergency unlatch:")
+    st.markdown("##### Hardware Actuators & Interlock")
+    st.caption("Direct relay interlock control & emergency trip reset:")
 
     act_col1, act_col2 = st.columns(2)
     with act_col1:
-        if st.button("🟢 Start", key="btn_start_machine", use_container_width=True, help="Arm relay and start compressor"):
+        if st.button("Start Motor", key="btn_start_machine", use_container_width=True, help="Arm relay and start compressor"):
             if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
                 st.session_state.serial_client.send_command("CMD:START")
                 st.toast("Sent CMD:START to ESP32-S3")
@@ -130,7 +131,7 @@ with st.sidebar:
                 st.toast("Simulator: Compressor armed and started")
 
     with act_col2:
-        if st.button("⏹️ E-Stop", key="btn_estop_machine", use_container_width=True, help="Emergency power isolation (de-energize relay)"):
+        if st.button("Emergency Stop", key="btn_estop_machine", use_container_width=True, help="Emergency power isolation (de-energize relay)"):
             if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
                 st.session_state.serial_client.send_command("CMD:STOP")
                 st.toast("Sent CMD:STOP to ESP32-S3 (Relay Cut)")
@@ -138,7 +139,7 @@ with st.sidebar:
                 st.session_state.simulator.manual_stop()
                 st.toast("Simulator: Manual E-Stop triggered")
 
-    if st.button("🔄 Reset Safety Interlock", key="btn_reset_interlock_main", use_container_width=True, type="primary", help="Unlatch safety trip, silence buzzer, and re-arm relay"):
+    if st.button("Reset Safety Interlock", key="btn_reset_interlock_main", use_container_width=True, type="primary", help="Unlatch safety trip, silence buzzer, and re-arm relay"):
         if st.session_state.telemetry_mode == "Live Serial (ESP32-S3)" and st.session_state.serial_client.is_connected:
             ok = st.session_state.serial_client.send_command("CMD:RESET")
             if ok:
@@ -166,9 +167,9 @@ with st.sidebar:
         tare_active = st.session_state.get("pressure_tared", False)
         tare_offset = st.session_state.get("pressure_tare_psi", 0.0)
         if is_live:
-            btn_txt = "🎯 Zero Pressure (0 PSI)" if not tare_active else "🎯 Zeroed (Hardware Calibrated)"
+            btn_txt = "Tare Pressure (0 PSI)" if not tare_active else "Tare Active (Calibrated)"
         else:
-            btn_txt = "🎯 Zero Pressure (0 PSI)" if tare_offset == 0.0 else f"🎯 Tared (-{tare_offset:.1f} PSI)"
+            btn_txt = "Tare Pressure (0 PSI)" if tare_offset == 0.0 else f"Tared (-{tare_offset:.1f} PSI)"
 
         if st.button(btn_txt, key="btn_tare_pressure_sidebar", use_container_width=True, help="Tare pressure sensor offset to 0.0 PSI in open air"):
             st.session_state["pressure_tared"] = True
@@ -181,7 +182,7 @@ with st.sidebar:
                 st.toast(f"Simulator: Pressure zeroed (offset: -{curr_raw:.2f} PSI)")
             st.rerun()
     with cal_col2:
-        if st.button("↺ Reset Tare", key="btn_reset_tare_sidebar", use_container_width=True, help="Revert pressure calibration to factory offset"):
+        if st.button("Reset Tare", key="btn_reset_tare_sidebar", use_container_width=True, help="Revert pressure calibration to factory offset"):
             st.session_state["pressure_tared"] = False
             st.session_state["pressure_tare_psi"] = 0.0
             if is_live and st.session_state.serial_client.is_connected:
@@ -194,12 +195,12 @@ with st.sidebar:
     st.markdown("---")
 
     # 3. Live Fault Injection Trigger Rig
-    st.markdown("##### 💥 Live Fault Injection Rig")
-    st.caption("Perturb the machine in real-time to demonstrate multi-modal anomaly detection and automated relay tripping:")
+    st.markdown("##### Controlled Fault Perturbation Rig")
+    st.caption("Inject calibrated physical perturbations to verify real-time multi-modal anomaly classification and sub-50ms relay tripping:")
 
     f_col1, f_col2 = st.columns(2)
     with f_col1:
-        if st.button("🟢 Nominal Run", key="btn_fault_nominal_sidebar", use_container_width=True):
+        if st.button("Nominal Baseline", key="btn_fault_nominal_sidebar", use_container_width=True):
             st.session_state.simulator.set_fault_regime("NOMINAL")
             st.session_state["active_fault_regime"] = "NOMINAL"
             st.session_state["c03_active_payload"] = None
@@ -214,7 +215,7 @@ with st.sidebar:
             st.toast("Operating regime set to NOMINAL")
             st.rerun()
 
-        if st.button("💨 Air Leak Fault", key="btn_fault_air_leak_sidebar", use_container_width=True):
+        if st.button("Pneumatic Line Leak", key="btn_fault_air_leak_sidebar", use_container_width=True):
             st.session_state.simulator.set_fault_regime("AIR_LEAK")
             st.session_state["active_fault_regime"] = "AIR_LEAK"
             st.session_state["c03_active_payload"] = None
@@ -223,7 +224,7 @@ with st.sidebar:
             st.rerun()
 
     with f_col2:
-        if st.button("🔨 Bearing Knock", key="btn_fault_bearing_knock_sidebar", use_container_width=True):
+        if st.button("Bearing Impact Knock", key="btn_fault_bearing_knock_sidebar", use_container_width=True):
             st.session_state.simulator.set_fault_regime("BEARING_VALVE_KNOCK")
             st.session_state["active_fault_regime"] = "BEARING_VALVE_KNOCK"
             st.session_state["c03_active_payload"] = None
@@ -231,7 +232,7 @@ with st.sidebar:
             st.toast("Injected Mechanical Bearing Knock!")
             st.rerun()
 
-        if st.button("🚨 Overpressure", key="btn_fault_overpressure_sidebar", use_container_width=True):
+        if st.button("Discharge Overpressure", key="btn_fault_overpressure_sidebar", use_container_width=True):
             st.session_state.simulator.set_fault_regime("CRITICAL_OVERPRESSURE")
             st.session_state["active_fault_regime"] = "CRITICAL_OVERPRESSURE"
             st.session_state["c03_active_payload"] = None
@@ -239,7 +240,7 @@ with st.sidebar:
             st.toast("Injected Pressure Ramp -> Overpressure Cutoff!")
             st.rerun()
 
-    if st.button("🔥 Thermal Overheat", key="btn_fault_overheat_sidebar", use_container_width=True):
+    if st.button("Cylinder Thermal Overheat", key="btn_fault_overheat_sidebar", use_container_width=True):
         st.session_state.simulator.set_fault_regime("THERMAL_OVERHEAT")
         st.session_state["active_fault_regime"] = "THERMAL_OVERHEAT"
         st.session_state["c03_active_payload"] = None
@@ -251,16 +252,16 @@ with st.sidebar:
     st.markdown("---")
 
     # 4. Stream Controls & CSV Export
-    st.markdown("##### ⏯️ Stream Playback")
-    auto_stream = st.checkbox("⚡ Auto-Stream Telemetry", value=True)
+    st.markdown("##### Telemetry Stream Controls")
+    auto_stream = st.checkbox("Auto-Stream Active", value=True)
     refresh_rate = st.slider("Stream Interval (sec)", min_value=0.15, max_value=2.0, value=1.30, step=0.05)
 
     p_col1, p_col2 = st.columns(2)
     with p_col1:
-        if st.button("▶️ Step / Tick", key="btn_sim_step", use_container_width=True):
+        if st.button("Step Frame", key="btn_sim_step", use_container_width=True):
             pass
     with p_col2:
-        if st.button("🧹 Clear Logs", key="btn_clear_logs", use_container_width=True):
+        if st.button("Clear History Buffer", key="btn_clear_logs", use_container_width=True):
             st.session_state.history = []
             st.session_state.total_steps = 0
             st.session_state.simulator = CompressorTelemetrySimulator()
@@ -274,7 +275,7 @@ with st.sidebar:
         df_export = pd.DataFrame(st.session_state.history)
         csv_data = df_export.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="📥 Export Session CSV",
+            label="Export Session Log (CSV)",
             data=csv_data,
             file_name=f"compressor_telemetry_session_{int(time.time())}.csv",
             mime="text/csv",
@@ -283,23 +284,23 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 4. View Presentation Mode & Component Selector
-    st.markdown("##### 🧩 Intelligence Modules View")
+    # 5. View Presentation Mode & Module Selector
+    st.markdown("##### System Intelligence Modules")
     presentation_mode = st.radio(
         "Presentation Mode:",
-        ["Unified Multi-Tab (All Components)", "Individual Component Focus"],
+        ["Unified Dashboard (All Modules)", "Focused Module View"],
         index=0
     )
 
     selected_component = None
-    if presentation_mode == "Individual Component Focus":
+    if presentation_mode == "Focused Module View":
         selected_component = st.selectbox(
-            "Select Component View",
+            "Select Module View",
             [
-                "⚡ C01: Edge Sensing & DSP Waveforms",
-                "🧠 C02: AI Predictive Maintenance & RUL",
-                "🌐 C03: Industrial Digital Twin",
-                "🎯 C04: RL Prescriptive Maintenance"
+                "Module 01: High-Frequency Edge Sensing & DSP",
+                "Module 02: Predictive AI Diagnostics & RUL",
+                "Module 03: Industrial Digital Twin & State Space",
+                "Module 04: Prescriptive Policy Optimization"
             ],
             index=2
         )
@@ -357,23 +358,23 @@ render_header(
 fault_cause = current_packet.get("fault_cause", "NORMAL") if current_packet else "NORMAL"
 render_alert_banner(is_tripped=is_tripped, fault_cause=fault_cause, is_anomalous=is_anomalous, latency_us=7.12)
 
-# 3. View Routing (Unified Tabs OR Individual Component Focus)
-if presentation_mode == "Individual Component Focus" and selected_component is not None:
-    if "C01" in selected_component:
+# 3. View Routing (Unified System Tabs OR Focused Module View)
+if presentation_mode == "Focused Module View" and selected_component is not None:
+    if "Module 01" in selected_component or "C01" in selected_component:
         render_c01_view(current_packet, history_df)
-    elif "C02" in selected_component:
+    elif "Module 02" in selected_component or "C02" in selected_component:
         render_c02_view(current_packet, history_df)
-    elif "C03" in selected_component:
+    elif "Module 03" in selected_component or "C03" in selected_component:
         render_c03_view(current_packet, history_df)
-    elif "C04" in selected_component:
+    elif "Module 04" in selected_component or "C04" in selected_component:
         render_c04_view(current_packet, history_df)
 else:
-    # Component Navigation Tabs (Unified master view combining all research components)
+    # Enterprise Navigation Tabs (Unified master view combining all platform modules)
     tab1, tab2, tab3, tab4 = st.tabs([
-        "📡 C01: Edge Sensing & DSP",
-        "🧠 C02: AI Predictive & RUL",
-        "🧬 C03: Digital Twin Behavioral",
-        "🤖 C04: RL Prescriptive Policies"
+        "Module 01: High-Frequency Edge & DSP",
+        "Module 02: Predictive AI & RUL Prognostics",
+        "Module 03: Industrial Digital Twin",
+        "Module 04: Prescriptive Policy Engine"
     ])
 
     with tab1:

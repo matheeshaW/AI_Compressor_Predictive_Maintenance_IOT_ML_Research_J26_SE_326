@@ -27,18 +27,18 @@ def render_c02_view(current_packet: Dict[str, Any] = None, history_df: pd.DataFr
     if history_df is None:
         history_df = pd.DataFrame()
 
-    # Enterprise Industrial Title (Clean, Professional, No Student Name in Banner)
+    # Enterprise Industrial Title (Clean, Professional)
     st.markdown("""
         <div style="margin-bottom: 16px;">
-            <h2 style="margin: 0; color: #f0f4f8; font-size: 1.6rem;">🧠 AI Predictive Maintenance & RUL Prognostics Engine</h2>
-            <p style="margin: 4px 0 0 0; color: #8a99ad; font-size: 0.88rem;">
+            <h2 style="margin: 0; color: #f0f4f8; font-size: 1.5rem; font-family: 'Outfit', sans-serif; font-weight: 700;">Predictive AI Diagnostics & RUL Prognostics Engine</h2>
+            <p style="margin: 4px 0 0 0; color: #8a99ad; font-size: 0.86rem;">
                 Continuous Asset Prognostics, Dual-Head Multi-Task LSTM Temporal Modeling & TreeSHAP Root-Cause Explainability
             </p>
         </div>
     """, unsafe_allow_html=True)
 
-        # 1. INTERACTIVE EXAMINER PROGNOSTIC RIG (Synchronized with master simulator)
-    with st.expander("🎛️ Live Prognostic Scenario Tester (Interactive Evaluator Rig)", expanded=False):
+    # 1. CONTROLLED PROGNOSTIC SCENARIO SIMULATOR
+    with st.expander("Controlled Prognostic Scenario Simulator", expanded=False):
         st.markdown(
             "Simulate compressor operating states to evaluate real-time model response, "
             "RUL countdown degradation, and **TreeSHAP root-cause attribution**:"
@@ -46,27 +46,27 @@ def render_c02_view(current_packet: Dict[str, Any] = None, history_df: pd.DataFr
         s_col1, s_col2, s_col3, s_col4, s_col5 = st.columns(5)
 
         with s_col1:
-            if st.button("🟢 Nominal Baseline", key="btn_c02_nominal", use_container_width=True):
+            if st.button("Nominal Baseline", key="btn_c02_nominal", use_container_width=True):
                 if "simulator" in st.session_state:
                     st.session_state.simulator.set_fault_regime("NOMINAL")
                 st.rerun()
         with s_col2:
-            if st.button("💨 Pneumatic Air Leak", key="btn_c02_leak", use_container_width=True):
+            if st.button("Pneumatic Air Leak", key="btn_c02_leak", use_container_width=True):
                 if "simulator" in st.session_state:
                     st.session_state.simulator.set_fault_regime("AIR_LEAK")
                 st.rerun()
         with s_col3:
-            if st.button("🔨 Bearing Knock", key="btn_c02_bearing_knock", use_container_width=True):
+            if st.button("Bearing Impact Knock", key="btn_c02_bearing_knock", use_container_width=True):
                 if "simulator" in st.session_state:
                     st.session_state.simulator.set_fault_regime("BEARING_VALVE_KNOCK")
                 st.rerun()
         with s_col4:
-            if st.button("🚨 Valve Overpressure", key="btn_c02_overpressure", use_container_width=True):
+            if st.button("Valve Overpressure", key="btn_c02_overpressure", use_container_width=True):
                 if "simulator" in st.session_state:
                     st.session_state.simulator.set_fault_regime("CRITICAL_OVERPRESSURE")
                 st.rerun()
         with s_col5:
-            if st.button("🔥 Critical Overheat", key="btn_c02_overheat", use_container_width=True):
+            if st.button("Cylinder Overheat", key="btn_c02_overheat", use_container_width=True):
                 if "simulator" in st.session_state:
                     st.session_state.simulator.set_fault_regime("THERMAL_OVERHEAT")
                 st.rerun()
@@ -185,7 +185,7 @@ def render_c02_view(current_packet: Dict[str, Any] = None, history_df: pd.DataFr
     g_col1, g_col2, g_col3 = st.columns([1, 1, 1.35])
 
     with g_col1:
-        st.markdown("##### 🩺 Asset Health Dial")
+        st.markdown("##### Asset Health Dial")
         fig_health = go.Figure(go.Indicator(
             mode="gauge+number",
             value=health_index,
@@ -206,7 +206,7 @@ def render_c02_view(current_packet: Dict[str, Any] = None, history_df: pd.DataFr
         st.plotly_chart(fig_health, use_container_width=True)
 
     with g_col2:
-        st.markdown("##### ⏳ RUL Prognostic Meter")
+        st.markdown("##### Remaining Useful Life (RUL) Prognostics")
         fig_rul_gauge = go.Figure(go.Indicator(
             mode="gauge+number",
             value=rul_hours,
@@ -222,7 +222,7 @@ def render_c02_view(current_packet: Dict[str, Any] = None, history_df: pd.DataFr
         st.plotly_chart(fig_rul_gauge, use_container_width=True)
 
     with g_col3:
-        st.markdown("##### 🕸️ 5-Axis Fault Probability Distribution")
+        st.markdown("##### 5-Axis Multi-Class Fault Probability Distribution")
 
         # Two-line formatted labels to eliminate horizontal text clipping
         label_map = {
@@ -268,17 +268,17 @@ def render_c02_view(current_packet: Dict[str, Any] = None, history_df: pd.DataFr
 
     # 4. FIVE DETAILED INTERACTIVE TABS
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "🔍 TreeSHAP Root-Cause Attribution",
-        "📈 RUL Trajectory & Degradation Curve",
-        "⚡ Real-Time Diagnostic Probabilities",
-        "⚖️ Model Benchmarks (XGBoost vs LSTM)",
-        "📄 Shared Contract Conformance"
+        "TreeSHAP Root-Cause Attribution",
+        "RUL Degradation Trajectory",
+        "Diagnostic Class Probabilities",
+        "Comparative Model Benchmarks",
+        "Inter-Module Contract Specification"
     ])
 
     with tab1:
         st.subheader("Explainable AI: Sensor Root-Cause Attribution (TreeSHAP)")
         st.markdown(
-            "TreeSHAP mathematically decomposes the neural/boosted prediction into **exact directional Shapley attributions** ($\Delta \text{SHAP}$), "
+            r"TreeSHAP mathematically decomposes the neural/boosted prediction into **exact directional Shapley attributions** ($\Delta \text{SHAP}$), "
             "proving to plant operators **which physical sensor deviations triggered the alarm**:"
         )
 
@@ -308,12 +308,12 @@ def render_c02_view(current_packet: Dict[str, Any] = None, history_df: pd.DataFr
         st.plotly_chart(fig_shap_bar, use_container_width=True)
 
         # Expandable Static Publication-Grade Figures
-        with st.expander("📸 View 300 DPI Publication-Grade TreeSHAP Plots (Evaluation Proof)", expanded=False):
+        with st.expander("View 300 DPI High-Resolution TreeSHAP Plots", expanded=False):
             col_s1, col_s2 = st.columns(2)
             with col_s1:
                 wf_path = os.path.join(EVAL_DIR, "shap_waterfall_plot.png")
                 if os.path.exists(wf_path):
-                    st.image(Image.open(wf_path), use_container_width=True, caption="Figure 1: TreeSHAP Single-Sample Waterfall Plot (Slide 9 Proof)")
+                    st.image(Image.open(wf_path), use_container_width=True, caption="Figure 1: TreeSHAP Single-Sample Waterfall Plot")
             with col_s2:
                 sum_path = os.path.join(EVAL_DIR, "shap_summary_plot.png")
                 if os.path.exists(sum_path):
@@ -350,7 +350,7 @@ def render_c02_view(current_packet: Dict[str, Any] = None, history_df: pd.DataFr
         )
         st.plotly_chart(fig_rul_traj, use_container_width=True)
 
-        with st.expander("📸 View Static 300 DPI Benchmark Plot (Evaluation Proof)"):
+        with st.expander("View Static 300 DPI Benchmark Plot"):
             traj_img_path = os.path.join(EVAL_DIR, "rul_prediction_trajectory.png")
             if os.path.exists(traj_img_path):
                 st.image(Image.open(traj_img_path), use_container_width=True, caption="Multi-Task PyTorch LSTM RUL Forecast Curve")
@@ -388,19 +388,19 @@ def render_c02_view(current_packet: Dict[str, Any] = None, history_df: pd.DataFr
             st.image(Image.open(comp_img_path), use_container_width=True, caption="Head-to-Head Comparative Metric Benchmark")
 
     with tab5:
-        st.subheader("Shared Interface Contract Conformance (C02 ➡️ C03)")
+        st.subheader("Inter-Module Interface Contract (Module 02 → Module 03)")
         st.markdown("Validated against schema: `shared/interfaces/c02_to_c03_prediction_contract.json`")
         if payload:
             st.json(payload)
         else:
             st.info("Sample contract payload file not found.")
 
-    # Subtle academic footer for examiner inspection
-    with st.expander("📘 Academic Traceability & SLIIT Research Metadata (J26-SE-326)", expanded=False):
+    # Technical specifications and integration standards
+    with st.expander("Enterprise Architecture & Verification Specifications", expanded=False):
         st.caption(
-            "Component 02: AI-Based Predictive Maintenance & RUL Forecasting | Student ID: **IT23221178**<br>"
-            "Pillars Covered: Chronological Leakage-Free Preprocessing, Multi-Task PyTorch Temporal Modeling (MPS GPU), "
-            "Game-Theoretic TreeSHAP Attribution, and Shared JSON Schema Interoperability.",
+            "Module 02: AI-Based Predictive Maintenance & Remaining Useful Life (RUL) Prognostics.<br>"
+            "Architectural Pillars: Chronological Leakage-Free Data Preprocessing, Dual-Head Multi-Task PyTorch Temporal Modeling (GPU Accelerated), "
+            "Game-Theoretic TreeSHAP Attribution, and Standardized JSON Schema Interoperability.",
             unsafe_allow_html=True
         )
 
