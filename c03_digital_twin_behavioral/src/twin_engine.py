@@ -387,12 +387,12 @@ class IndustrialDigitalTwinEngine:
         if kurt > 5.5 and vib_x > 4.5:
             bearing_status = "IMPACTING"
             bearing_health = 0.25
-        elif vib_x > 4.0:
+        elif kurt > 4.5 or vib_x > 6.5:
             bearing_status = "WEAR_DETECTED"
             bearing_health = 0.50
         else:
             bearing_status = "NOMINAL"
-            bearing_health = round(max(0.0, 1.0 - (vib_x / 8.0)), 3)
+            bearing_health = round(float(np.clip(1.0 - 0.2 * comp_score, 0.85, 0.99)), 3)
 
         return {
             "electric_motor": {
