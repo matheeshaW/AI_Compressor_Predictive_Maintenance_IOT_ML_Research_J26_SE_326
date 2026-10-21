@@ -40,9 +40,9 @@ class DigitalTwinViewController:
     """
 
     # Pre-calibrated perturbation presets for testing operational regimes
-    VIVA_SCENARIOS = {
+    BENCHMARK_SCENARIOS = {
         "NOMINAL_LOADED": {
-            "name": "🟢 Nominal Pressurizing (75 PSI)",
+            "name": "Nominal Pressurizing (75 PSI)",
             "packet": {
                 "pressure_psi": 75.0,
                 "delta_pressure_dt": 1.40,
@@ -55,7 +55,7 @@ class DigitalTwinViewController:
             "description": "Baseline reciprocating cycle with nominal compression rate (1.40 PSI/s) and healthy acoustics.",
         },
         "STEADY_HOLD": {
-            "name": "🟢 Steady Pressure Hold (118 PSI)",
+            "name": "Steady Pressure Hold (118 PSI)",
             "packet": {
                 "pressure_psi": 118.0,
                 "delta_pressure_dt": 0.01,
@@ -68,7 +68,7 @@ class DigitalTwinViewController:
             "description": "Receiver tank fully charged at cut-out setpoint with unloader valve open.",
         },
         "PNEUMATIC_VALVE_LEAK": {
-            "name": "💨 Pneumatic Valve Leakage (92 PSI)",
+            "name": "Pneumatic Valve Leakage (92 PSI)",
             "packet": {
                 "pressure_psi": 92.0,
                 "delta_pressure_dt": -0.45,
@@ -81,7 +81,7 @@ class DigitalTwinViewController:
             "description": "Discharge reed valve failure causing reverse leakage, pressure decay, and high acoustic hissing (>500 mV).",
         },
         "BEARING_SPALL_DAMAGE": {
-            "name": "🔨 Bearing Impact Knocking",
+            "name": "Bearing Impact Knocking",
             "packet": {
                 "pressure_psi": 25.0,
                 "delta_pressure_dt": 0.0,
@@ -94,7 +94,7 @@ class DigitalTwinViewController:
             "description": "Severe localized outer-race fatigue spall producing impulsive shock impacts (Kurtosis = 6.8).",
         },
         "TRANSIENT_NOISE_SPIKE": {
-            "name": "⚡ Single-Frame Electrical / Vibration Spike",
+            "name": "Single-Frame Electrical / Vibration Spike",
             "packet": {
                 "pressure_psi": 75.0,
                 "delta_pressure_dt": 1.4,
@@ -107,7 +107,7 @@ class DigitalTwinViewController:
             "description": "Single-frame line noise artifact to verify that the persistence filter rejects momentary shock without false alarms.",
         },
         "BLOWDOWN_VENT": {
-            "name": "🛑 Purge Valve Blowdown Discharge",
+            "name": "Purge Valve Blowdown Discharge",
             "packet": {
                 "pressure_psi": 60.0,
                 "delta_pressure_dt": -3.2,
@@ -120,6 +120,7 @@ class DigitalTwinViewController:
             "description": "Controlled rapid purge discharge through unloader solenoid valve.",
         },
     }
+    VIVA_SCENARIOS = BENCHMARK_SCENARIOS
 
     def __init__(self, asset_id: str = "COMP-RECIP-01"):
         self.asset_id = asset_id
@@ -235,9 +236,9 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         return
 
     if not C03_IMPORTS_LOADED:
-        st.error(f"⚠️ **Component 03 Digital Twin Dependency Missing:** `{C03_IMPORT_ERROR}`")
+        st.error(f"**Module 03 Digital Twin Dependency Missing:** `{C03_IMPORT_ERROR}`")
         st.info(
-            "To view Component 03, please install the required ML packages in your terminal:\n\n"
+            "To view Module 03, please install the required ML packages in your terminal:\n\n"
             "```powershell\npip install -r dashboard/requirements.txt\n```\n"
             "or:\n"
             "```powershell\npip install joblib scikit-learn scipy\n```"
@@ -263,13 +264,13 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         latest_payload = controller.engine.get_state_snapshot()
     else:
         # Initial boot nominal step
-        latest_payload = controller.process_telemetry(DigitalTwinViewController.VIVA_SCENARIOS["NOMINAL_LOADED"]["packet"])
+        latest_payload = controller.process_telemetry(DigitalTwinViewController.BENCHMARK_SCENARIOS["NOMINAL_LOADED"]["packet"])
 
     if latest_payload is None:
-        latest_payload = controller.process_telemetry(DigitalTwinViewController.VIVA_SCENARIOS["NOMINAL_LOADED"]["packet"])
+        latest_payload = controller.process_telemetry(DigitalTwinViewController.BENCHMARK_SCENARIOS["NOMINAL_LOADED"]["packet"])
 
     # Header & Component Subtitle
-    st.markdown("### 🧬 Component 03: Industrial Digital Twin & Behavioral Intelligence")
+    st.markdown("### Module 03: Industrial Digital Twin & Behavioral Intelligence")
     st.markdown(
         "*Real-time cyber-physical synchronization and behavioral intelligence engine. Resamples multi-modal telemetry at 25 Hz, "
         "discovers operational regimes via Gaussian Mixture Models (K=5), evaluates state-conditioned regularized Mahalanobis envelopes, "
@@ -277,11 +278,11 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     )
 
     # ==============================================================================
-    # 1. LIVE VIVA INTERACTIVE SCENARIO RIG (GAINS HIGH MARKS IN EXAMINER DEMO)
+    # 1. CYBER-PHYSICAL REGIME PERTURBATION CONSOLE
     # ==============================================================================
     is_scenario_injected = "c03_active_scenario" in st.session_state and st.session_state.c03_active_scenario
 
-    with st.expander("🎮 Live Operational Fault Injection & Scenario Testing Rig", expanded=True):
+    with st.expander("Cyber-Physical Perturbation & Regime Simulation Console", expanded=True):
         st.markdown(
             "Inject calibrated operational perturbations directly into the Digital Twin to evaluate dynamic state discovery, "
             "subsystem degradation tracking, and **transient noise rejection vs. persistent drift declaration**:"
@@ -290,9 +291,9 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         sc_col1, sc_col2, sc_col3, sc_col4, sc_col5, sc_col6 = st.columns(6)
 
         with sc_col1:
-            if st.button("🟢 Nominal (75 PSI)", key="btn_c03_nominal", use_container_width=True):
-                p = DigitalTwinViewController.VIVA_SCENARIOS["NOMINAL_LOADED"]["packet"]
-                st.session_state.c03_active_scenario = "Nominal Pressurizing (75 PSI)"
+            if st.button("Nominal Loaded (75 PSI)", key="btn_c03_nominal", use_container_width=True):
+                p = DigitalTwinViewController.BENCHMARK_SCENARIOS["NOMINAL_LOADED"]["packet"]
+                st.session_state.c03_active_scenario = "Nominal Loaded (75 PSI)"
                 # Cleanly reset persistence and recent deviations for healthy nominal run
                 controller.engine.buffer.clear()
                 controller.engine.tracker.persistence_counter = 0
@@ -304,9 +305,9 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 st.rerun()
 
         with sc_col2:
-            if st.button("💨 Valve Leak (92 PSI)", key="btn_c03_valve_leak", use_container_width=True):
-                p = DigitalTwinViewController.VIVA_SCENARIOS["PNEUMATIC_VALVE_LEAK"]["packet"]
-                st.session_state.c03_active_scenario = "Pneumatic Valve Leakage (92 PSI)"
+            if st.button("Valve Leakage (92 PSI)", key="btn_c03_valve_leak", use_container_width=True):
+                p = DigitalTwinViewController.BENCHMARK_SCENARIOS["PNEUMATIC_VALVE_LEAK"]["packet"]
+                st.session_state.c03_active_scenario = "Valve Leakage (92 PSI)"
                 controller.engine.buffer.clear()
                 # Step 5 consecutive frames to demonstrate persistent drift declaration
                 payload = None
@@ -317,9 +318,9 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 st.rerun()
 
         with sc_col3:
-            if st.button("🔨 Bearing Knock", key="btn_c03_bearing_knock", use_container_width=True):
-                p = DigitalTwinViewController.VIVA_SCENARIOS["BEARING_SPALL_DAMAGE"]["packet"]
-                st.session_state.c03_active_scenario = "Bearing Impact Knocking"
+            if st.button("Bearing Fatigue Impact", key="btn_c03_bearing_knock", use_container_width=True):
+                p = DigitalTwinViewController.BENCHMARK_SCENARIOS["BEARING_SPALL_DAMAGE"]["packet"]
+                st.session_state.c03_active_scenario = "Bearing Fatigue Impact"
                 controller.engine.buffer.clear()
                 # Step 5 consecutive frames to trigger persistent mechanical knock
                 payload = None
@@ -330,8 +331,8 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 st.rerun()
 
         with sc_col4:
-            if st.button("⚡ Transient Spike", key="btn_c03_transient_spike", use_container_width=True):
-                p = DigitalTwinViewController.VIVA_SCENARIOS["TRANSIENT_NOISE_SPIKE"]["packet"]
+            if st.button("Transient Noise Spike", key="btn_c03_transient_spike", use_container_width=True):
+                p = DigitalTwinViewController.BENCHMARK_SCENARIOS["TRANSIENT_NOISE_SPIKE"]["packet"]
                 st.session_state.c03_active_scenario = "Transient Noise Spike"
                 # Reset counter to 0 so the single-frame spike cleanly registers as 1/5 (filtering noise)
                 controller.engine.buffer.clear()
@@ -342,9 +343,9 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 st.rerun()
 
         with sc_col5:
-            if st.button("🛑 Purge Discharge", key="btn_c03_purge_discharge", use_container_width=True):
-                p = DigitalTwinViewController.VIVA_SCENARIOS["BLOWDOWN_VENT"]["packet"]
-                st.session_state.c03_active_scenario = "Purge Valve Discharge"
+            if st.button("Purge Discharge", key="btn_c03_purge_discharge", use_container_width=True):
+                p = DigitalTwinViewController.BENCHMARK_SCENARIOS["BLOWDOWN_VENT"]["packet"]
+                st.session_state.c03_active_scenario = "Purge Discharge"
                 controller.engine.buffer.clear()
                 controller.engine.tracker.persistence_counter = 0
                 controller.engine.tracker.drift_detected = False
@@ -353,7 +354,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 st.rerun()
 
         with sc_col6:
-            if st.button("🔄 Resume Stream", key="btn_c03_resume_stream", use_container_width=True, disabled=not is_scenario_injected):
+            if st.button("Resume Live Stream", key="btn_c03_resume_stream", use_container_width=True, disabled=not is_scenario_injected):
                 st.session_state.c03_active_payload = None
                 st.session_state.c03_active_scenario = None
                 controller.engine.buffer.clear()
@@ -363,7 +364,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
                 st.rerun()
 
         if is_scenario_injected:
-            st.info(f"📍 **Currently Demonstrating Injected Scenario:** `{st.session_state.c03_active_scenario}`. (Click **'🔄 Resume Stream'** to return to continuous sidebar streaming).")
+            st.info(f"**Active Regime Simulation:** `{st.session_state.c03_active_scenario}`. (Click **'Resume Live Stream'** to return to continuous stream).")
 
     state_info = latest_payload.get("operating_state", {})
     beh_info = latest_payload.get("behavioral_intelligence", {})
@@ -448,7 +449,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     g_col1, g_col2 = st.columns([1.2, 1])
 
     with g_col1:
-        st.markdown("##### 🌌 Unsupervised Latent Operational State Space")
+        st.markdown("##### Unsupervised Latent Operational State Space")
         view_mode = st.radio("Visualization Perspective:", ["2D Latent Space (P vs I)", "3D Latent Space (P vs I vs Vibration)"], horizontal=True)
 
         np.random.seed(42)
@@ -522,7 +523,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
             st.plotly_chart(fig_3d, use_container_width=True)
 
     with g_col2:
-        st.markdown("##### 🎯 Multi-Variate Behavioral Radar Envelope")
+        st.markdown("##### Multi-Variate Behavioral Radar Envelope")
         st.caption("Active State Centroid Envelope (Learned μ ± 3σ) vs. Live Observation")
 
         radar_info = controller.get_radar_comparison_data(latest_payload)
@@ -583,7 +584,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     # ==============================================================================
     # 4. PHYSICAL SUB-ASSEMBLY STRUCTURAL HEALTH DECOMPOSITION
     # ==============================================================================
-    st.markdown("##### ⚙️ Physical Sub-Assembly Health Decomposition")
+    st.markdown("##### Physical Sub-Assembly Health Decomposition")
     
     motor = subsystems.get("electric_motor", {})
     cyl = subsystems.get("cylinder_piston_assembly", {})
@@ -630,7 +631,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
             </div>
             <div style="font-size: 0.75rem; color: #E2E8F0;">Acoustic: <b>{snap.get('acoustic_energy_mv', 0.0)} mV</b></div>
             <div style="font-size: 0.75rem; color: {'#EF4444' if valves.get('valve_leakage_detected') else '#10B981'}; margin-top: 0.2rem;">
-                <b>{'⚠️ LEAK DETECTED' if valves.get('valve_leakage_detected') else '✓ NOMINAL SEALING'}</b>
+                <b>{'LEAK DETECTED' if valves.get('valve_leakage_detected') else 'NOMINAL SEALING'}</b>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -652,7 +653,7 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     # ==============================================================================
     # 5. TEMPORAL BEHAVIORAL DEVIATION PERSISTENCE TRACKER
     # ==============================================================================
-    st.markdown("##### 📐 Multi-Window Behavioral Deviation Persistence Tracker")
+    st.markdown("##### Multi-Window Behavioral Deviation Persistence Tracker")
     st.caption("Monitors statistical Mahalanobis deviation drift against calibrated thermodynamic bounds over time.")
 
     history_records = controller.get_history()
@@ -677,18 +678,18 @@ def render_c03_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         st.plotly_chart(fig_drift, use_container_width=True)
 
     # ==============================================================================
-    # 6. DOWNSTREAM C04 RL PAYLOAD & TWIN ENGINE SPECIFICATIONS
+    # 6. DOWNSTREAM INTERFACE CONTRACT & TWIN ENGINE SPECIFICATIONS
     # ==============================================================================
     v_col1, v_col2 = st.columns([1.2, 1])
 
     with v_col1:
-        with st.expander("🔌 Downstream RL Integration Contract (C03 → C04 Interface)", expanded=False):
+        with st.expander("Downstream Interface Contract (Module 03 → Module 04)", expanded=False):
             st.json(latest_payload.get("downstream_contract_payload", {}))
 
     with v_col2:
-        with st.expander("📊 Digital Twin Benchmark & Engine Specifications", expanded=False):
+        with st.expander("Digital Twin Engine Performance & Validation Metrics", expanded=False):
             st.markdown("""
-            **Component 03 Performance & Validation Metrics:**
+            **Digital Twin Performance & Validation Metrics:**
             - **Temporal Synchronization:** Uniform 25 Hz deterministic aligner (40 ms cycle budget).
             - **Cluster Separability:** Silhouette = **0.742**, Davies-Bouldin = **0.481**, Calinski-Harabasz = **1,482.6**.
             - **Transient Immunity:** 5-window persistence filter achieves **96.4% transient noise rejection**.

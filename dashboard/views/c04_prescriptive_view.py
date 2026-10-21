@@ -1,9 +1,8 @@
 """
 c04_prescriptive_view.py
 ========================
-Component 04: Reinforcement Learning-Based Prescriptive Maintenance Optimization
-Lead: Liyanage H.G.W.R (IT23163690)
-Project: SLIIT 4th Year Research Project (J26-SE-326)
+Module 04: Reinforcement Learning-Based Prescriptive Maintenance Optimization
+AIR-GUARD Industrial Asset Performance Management Suite
 
 Modular view integrated directly into AIR-GUARD AI Unified Dashboard (app.py).
 Conforms strictly to the Modular Dashboard Rule (no standalone execution or st.set_page_config).
@@ -48,7 +47,7 @@ ACTION_METADATA = {
         "downtime_h": 0.0,
         "direct_cost": 0.0,
         "urgency": "Nominal — No Intervention Required",
-        "icon": "🟢",
+        "icon": "",
         "description": "System operating within optimal cost boundaries. Deferring maintenance to maximize production uptime.",
     },
     1: {
@@ -59,7 +58,7 @@ ACTION_METADATA = {
         "downtime_h": 2.0,
         "direct_cost": 350.0,
         "urgency": "Low — Schedule during next shift transition",
-        "icon": "🔍",
+        "icon": "",
         "description": "Optimal intervention window reached due to early {active_regime} degradation. Executing minor service NOW resets early wear and avoids major overhaul costs.",
     },
     2: {
@@ -70,7 +69,7 @@ ACTION_METADATA = {
         "downtime_h": 16.0,
         "direct_cost": 2500.0,
         "urgency": "Medium — Execute within next 24 operating hours",
-        "icon": "⚠️",
+        "icon": "",
         "description": "Optimal intervention window reached due to {active_regime}. Executing maintenance NOW prevents catastrophic failure and minimizes total lifecycle costs.",
     },
     3: {
@@ -81,7 +80,7 @@ ACTION_METADATA = {
         "downtime_h": 48.0,
         "direct_cost": 8000.0,
         "urgency": "IMMEDIATE — Sub-50ms Interlock Trigger",
-        "icon": "🚨",
+        "icon": "",
         "description": "Optimal intervention window reached due to {active_regime}. Executing maintenance NOW prevents catastrophic failure and minimizes total lifecycle costs.",
     },
 }
@@ -146,7 +145,7 @@ def extract_observation_vector(
 
     Priority:
       1. c03_payload_override (direct injection)
-      2. st.session_state.c03_active_payload (active viva scenario perturbation)
+      2. st.session_state.c03_active_payload (active scenario perturbation)
       3. st.session_state.c03_controller.latest_payload (continuous twin engine state)
       4. Mathematical fallback from current_packet (if C03 payload is missing entirely)
     """
@@ -394,7 +393,7 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     if history_df is None:
         history_df = pd.DataFrame()
 
-    st.markdown("### 🤖 Component 04: Reinforcement Learning-Based Prescriptive Maintenance")
+    st.markdown("### Module 04: Reinforcement Learning Prescriptive Maintenance Engine")
     st.markdown(
         "*Markov Decision Process (MDP) solver trained inside a custom Gymnasium environment. "
         "Prescribes optimal maintenance interventions to maximize machine uptime and eliminate catastrophic failures.*"
@@ -413,13 +412,13 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     # Display active scenario or global fault injection indicator
     if hasattr(st, "session_state") and st.session_state.get("c03_active_scenario"):
         st.info(
-            f"🔗 **Digital Twin Synchronized:** Receiving active cyber-physical state from C03 scenario: "
+            f"**Digital Twin Synchronized:** Receiving active cyber-physical state from Module 03 scenario: "
             f"**{st.session_state.c03_active_scenario}**"
         )
     elif active_regime not in ("NORMAL", "NOMINAL"):
         st.warning(
-            f"⚡ **Live Fault Perturbation Detected:** RL Prescriptive policy responding to global simulated fault: "
-            f"**{active_regime}** (Degradation Spike: **{deg_t:.2f} / 1.00** | Prescribed: **{act_meta['label']}**)"
+            f"**Live Perturbation Regime:** RL Prescriptive policy responding to global simulated fault: "
+            f"**{active_regime}** (Degradation: **{deg_t:.2f} / 1.00** | Prescribed: **{act_meta['label']}**)"
         )
 
     # ==========================================================================
@@ -436,7 +435,7 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     ">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
             <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94A3B8;">
-                {act_meta['icon']} Deep Q-Network Prescriptive Policy (π*)
+                Prescriptive Optimal Policy Decision (π*)
             </span>
             <span style="
                 background: rgba(255, 255, 255, 0.08);
@@ -454,7 +453,7 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
             {act_meta['label']}
         </div>
         <div style="font-size: 0.95rem; color: #E2E8F0; margin-bottom: 0.8rem; line-height: 1.5; background: rgba(255, 255, 255, 0.04); border-left: 3px solid {act_meta['color']}; padding: 0.6rem 0.9rem; border-radius: 6px;">
-            <b>⏱️ RL Timing Rationale:</b> {act_meta['description']}
+            <b>Prescriptive Policy Rationale:</b> {act_meta['description']}
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 1.8rem; font-size: 0.85rem; color: #CBD5E1; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.65rem;">
             <span>Active Regime: <b style="color: #38BDF8;">{active_regime}</b></span>
@@ -473,7 +472,7 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     col_q1, col_q2 = st.columns([1.1, 1.2])
 
     with col_q1:
-        st.markdown("##### 🎯 Neural Network State-Action Values Q(s, a)")
+        st.markdown("##### Neural Network State-Action Values Q(s, a)")
         st.caption("Q-values evaluate expected cumulative discounted operational returns across discrete action choices:")
 
         action_labels = [ACTION_METADATA[i]["label"] for i in range(4)]
@@ -503,7 +502,7 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         st.plotly_chart(fig_q, width='stretch')
 
     with col_q2:
-        st.markdown("##### 📈 Real-Time Prescriptive Recommendation Feed")
+        st.markdown("##### Real-Time Prescriptive Recommendation Feed")
         st.caption("Chronological stream of policy decisions responding to live operational telemetry:")
 
         # Build live decision feed prioritizing C03 cyber-physical state history
@@ -582,7 +581,7 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     # ==========================================================================
     # 3. VERIFIED 500-EPISODE BENCHMARK & INDUSTRIAL ROI SAVINGS CURVES
     # ==========================================================================
-    st.markdown("#### 💰 Industrial Cost Savings & Empirical Policy Benchmark (500 Episodes)")
+    st.markdown("#### Industrial Cost Savings & Empirical Policy Evaluation (500 Episodes)")
     st.caption("Rigorous Monte Carlo evaluation comparing the trained DQN prescriptive agent against industrial baseline policies:")
 
     # Top KPI Metrics Cards
@@ -628,7 +627,7 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     roi_col1, roi_col2 = st.columns([1.2, 1])
 
     with roi_col1:
-        st.markdown("##### 📉 Projected Cumulative Maintenance Cost Horizon")
+        st.markdown("##### Projected Cumulative Maintenance Cost Horizon")
         operating_months = np.arange(1, 37)  # 3 Years Horizon
 
         # Cost scaling per industrial month based on verified empirical rates
@@ -670,7 +669,7 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         st.plotly_chart(fig_roi, width='stretch')
 
     with roi_col2:
-        st.markdown("##### 💎 Net Financial Savings & Payback")
+        st.markdown("##### Net Financial Savings & Payback Metrics")
         cum_savings_vs_pm = (cost_pm_proj[-1] - cost_dqn_proj[-1])
         cum_savings_vs_rtf = (cost_rtf_proj[-1] - cost_dqn_proj[-1])
 
@@ -699,13 +698,13 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
     # ==========================================================================
     # 4. EMBEDDED HIGH-RESOLUTION COMPARATIVE EVALUATION PLOTS
     # ==========================================================================
-    st.markdown("#### 🔬 Empirical Policy Evaluation Artifacts & Plots")
+    st.markdown("#### Empirical Policy Evaluation & Verification Artifacts")
     st.caption("Visualizations generated from 500-episode Monte Carlo evaluation stored in experiments/results/:")
 
     tab_p1, tab_p2, tab_p3 = st.tabs([
-        "📊 Cost vs Downtime Trade-off",
-        "📈 Cumulative Reward Curves",
-        "⏱️ Policy Decision Trajectories",
+        "Cost vs. Downtime Pareto Analysis",
+        "Cumulative Reward Progression",
+        "Policy Decision Trajectories",
     ])
 
     p1_file = os.path.join(RESULTS_DIR, "cost_vs_downtime_tradeoff.png")
