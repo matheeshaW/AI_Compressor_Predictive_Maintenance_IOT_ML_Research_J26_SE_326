@@ -38,7 +38,10 @@ REPO_ROOT = os.path.dirname(DASHBOARD_DIR)
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from c04_rl_maintenance_optimization.src.env.compressor_maintenance_env import CompressorMaintenanceEnv
+try:
+    from c04_rl_maintenance_optimization.src.env.compressor_maintenance_env import CompressorMaintenanceEnv
+except Exception:
+    CompressorMaintenanceEnv = None
 
 # Paths to experiment artifacts and contract schema
 RESULTS_DIR = os.path.join(REPO_ROOT, "c04_rl_maintenance_optimization", "experiments", "results")
