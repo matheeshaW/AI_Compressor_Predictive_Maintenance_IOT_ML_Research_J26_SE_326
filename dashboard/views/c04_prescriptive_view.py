@@ -16,12 +16,18 @@ Features:
 
 import os
 import sys
+import json
+import textwrap
+from typing import Dict, Any, Optional, Tuple
 import numpy as np
 import pandas as pd
 import streamlit as st
-import textwrap
 import plotly.graph_objects as go
-from typing import Dict, Any, Optional, Tuple
+
+try:
+    import jsonschema
+except ImportError:
+    jsonschema = None
 
 # Resolve project roots
 VIEW_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -31,11 +37,29 @@ REPO_ROOT = os.path.dirname(DASHBOARD_DIR)
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-# Paths to experiment artifacts
+try:
+    from c04_rl_maintenance_optimization.src.env.compressor_maintenance_env import CompressorMaintenanceEnv
+except Exception:
+    CompressorMaintenanceEnv = None
+
+# Paths to experiment artifacts and contract schema
 RESULTS_DIR = os.path.join(REPO_ROOT, "c04_rl_maintenance_optimization", "experiments", "results")
 CHECKPOINT_PATH = os.path.join(REPO_ROOT, "c04_rl_maintenance_optimization", "experiments", "checkpoints", "dqn_agent.pt")
 METRICS_CSV = os.path.join(RESULTS_DIR, "comparative_policy_metrics.csv")
 EPISODES_CSV = os.path.join(RESULTS_DIR, "comparative_episodes_detailed.csv")
+CONTRACT_SCHEMA_PATH = os.path.join(REPO_ROOT, "shared", "interfaces", "c03_to_c04_twin_state_contract.json")
+
+
+@st.cache_data(show_spinner=False)
+def load_c03_contract_schema() -> Optional[Dict[str, Any]]:
+    """Loads and caches the standardized JSON schema contract for C03 to C04 interface."""
+    if os.path.exists(CONTRACT_SCHEMA_PATH):
+        try:
+            with open(CONTRACT_SCHEMA_PATH, "r") as f:
+                return json.load(f)
+        except Exception:
+            return None
+    return None
 
 
 ACTION_METADATA = {
@@ -130,7 +154,7 @@ def extract_observation_vector(
     current_packet: Optional[Dict[str, Any]] = None,
     history_df: Optional[pd.DataFrame] = None,
     c03_payload_override: Optional[Dict[str, Any]] = None,
-) -> Tuple[np.ndarray, float, str]:
+) -> Tuple[np.ndarray, float, str, Optional[Dict[str, Any]]]:
     """
     Transforms multi-modal telemetry and digital twin features into the
     canonical 8-dimensional continuous state representation s_t in S:
@@ -141,26 +165,45 @@ def extract_observation_vector(
       4: Component health / thermal dissipation theta_t in [0.0, 3.0]
       5: Operating regime / fault class k_t in {0, 1, 2, 3, 4}
       6: Anomaly persistence counter tau_t in [0.0, 1.0]
-      7: Elapsed cycle age since maintenance in [0.0, 1.0]
+    Directly ingests standardized payload from Module 03 Industrial Digital Twin Engine
+    strictly adhering to shared/interfaces/c03_to_c04_twin_state_contract.json.
 
     Priority:
       1. c03_payload_override (direct injection)
       2. st.session_state.c03_active_payload (active scenario perturbation)
       3. st.session_state.c03_controller.latest_payload (continuous twin engine state)
-      4. Mathematical fallback from current_packet (if C03 payload is missing entirely)
+      4. Mathematical fallback from current_packet (if Module 03 payload is missing entirely)
     """
     if current_packet is None:
         current_packet = {}
     if history_df is None:
         history_df = pd.DataFrame()
 
-        # 1. Check for live C03 Digital Twin Payload
     c03_payload = c03_payload_override
+
+    # 1. Acquire live C03 Digital Twin Payload conforming to interface contract
     if c03_payload is None and hasattr(st, "session_state"):
+        if "c03_controller" not in st.session_state:
+            try:
+                from dashboard.views.c03_digital_twin_view import DigitalTwinViewController
+                st.session_state.c03_controller = DigitalTwinViewController()
+                st.session_state.c03_controller.initialize_default()
+            except Exception:
+                pass
+
+        ctrl = st.session_state.get("c03_controller")
         if "c03_active_payload" in st.session_state and st.session_state.c03_active_payload:
-            c03_payload = st.session_state.c03_active_payload
-        elif "c03_controller" in st.session_state and getattr(st.session_state.c03_controller, "latest_payload", None):
-            c03_payload = st.session_state.c03_controller.latest_payload
+            if ctrl and hasattr(ctrl.engine, "get_c04_prescriptive_payload") and getattr(ctrl.engine, "_last_snapshot", None):
+                c03_payload = ctrl.engine.get_c04_prescriptive_payload()
+            else:
+                c03_payload = st.session_state.c03_active_payload
+        elif ctrl is not None:
+            if current_packet:
+                ctrl.process_telemetry(current_packet)
+            if hasattr(ctrl.engine, "get_c04_prescriptive_payload") and getattr(ctrl.engine, "_last_snapshot", None):
+                c03_payload = ctrl.engine.get_c04_prescriptive_payload()
+            elif getattr(ctrl, "latest_payload", None):
+                c03_payload = ctrl.latest_payload
 
     # 2. Extract multi-modal physical telemetry metrics from current packet
     score = float(current_packet.get("anomaly_score", 0.05))
@@ -170,7 +213,6 @@ def extract_observation_vector(
     trip_relay = bool(current_packet.get("trip_relay", False) or current_packet.get("relay_state") == "TRIPPED_OPEN")
     packet_fault = current_packet.get("fault_cause", "NORMAL")
 
-    # Instantaneous physical degradation spike calculated from multi-modal cues
     d_v = max(0.0, min(1.0, (v_rms - 0.30) / 0.50 + max(0.0, (kurt - 3.0) / 6.0)))
     d_t = max(0.0, min(1.0, (temp - 30.0) / 45.0))
     physical_deg = max(score, 0.6 * d_v + 0.4 * d_t)
@@ -186,11 +228,6 @@ def extract_observation_vector(
         sim_regime = getattr(st.session_state.get("simulator"), "active_regime", "NOMINAL")
         active_scenario = str(st.session_state.get("c03_active_scenario", ""))
 
-    # STRICT PRECEDENCE FOR FAULT RESOLUTION:
-    # 1. Sidebar fault injection rig session state ('active_fault_regime')
-    # 2. Simulator active regime if not nominal ('simulator.active_regime')
-    # 3. Packet fault cause if not normal ('current_packet.fault_cause')
-    # 4. Injected C03 scenario ('c03_active_scenario')
     injected_fault = "NORMAL"
     if st_regime not in ("NOMINAL", "NORMAL", None, ""):
         injected_fault = st_regime
@@ -204,81 +241,90 @@ def extract_observation_vector(
     f_str = str(injected_fault).upper()
 
     # --------------------------------------------------------------------------
-    # BRANCH A: C03 Digital Twin Payload Exists (Standard Live Pipeline)
+    # BRANCH A: C03 Digital Twin Payload Exists (Standard Contract Ingestion)
     # --------------------------------------------------------------------------
     if c03_payload is not None:
         deg_metrics = c03_payload.get("degradation_metrics", {})
         beh_intel = c03_payload.get("behavioral_intelligence", {})
         op_state = c03_payload.get("operating_state", {})
         meta = c03_payload.get("metadata", {})
-        state_label = str(op_state.get("state_label", "NORMAL"))
+        state_label = str(op_state.get("state_label", "PRESSURIZING_LOADED"))
+
+        # Base observation constructed directly from the C03 JSON contract
+        step_num = int(current_packet.get("step", 1))
+        cycle_idx = int(meta.get("twin_cycle_index", step_num))
+        obs = CompressorMaintenanceEnv.observation_from_c03_payload(
+            c03_payload,
+            hours_since_last_maint=float((cycle_idx % 100) * 4.0),
+            max_service_interval_hours=500.0,
+        )
 
         c03_deg = float(deg_metrics.get("composite_degradation_score", 0.05))
 
-        # Fault classification and degradation mapping with precedence over C03 state_label
-        if any(k in f_str for k in ("LEAK", "ANOMALOUS_LEAK")):
-            k_t = 1.0
-            active_regime = "PNEUMATIC_AIR_LEAK"
-            deg_t = max(c03_deg, physical_deg, 0.60)
-            eta_t = float(min(deg_metrics.get("pressure_efficiency_ratio", 0.40), 0.45))
-            tau_t = 0.8
+        # Fault classification mapping aligning C03 regime & active perturbation
+        if any(k in f_str for k in ("LEAK", "ANOMALOUS_LEAK")) or state_label == "ANOMALOUS_LEAK_REGIME":
+            if "BEARING" not in f_str and "KNOCK" not in f_str:
+                k_t = 1.0  # Leak cluster
+                active_regime = "PNEUMATIC_AIR_LEAK"
+                deg_t = max(c03_deg, physical_deg, 0.60)
+                obs[0] = deg_t
+                obs[1] = 1.0 - deg_t
+                obs[3] = float(min(deg_metrics.get("pressure_efficiency_ratio", 0.40), 0.45))
+                obs[5] = k_t
+                obs[6] = 0.8
+            else:
+                k_t = 2.0
+                active_regime = "BEARING_VALVE_KNOCK"
+                deg_t = max(c03_deg, physical_deg, 0.90)
+                obs[0] = deg_t
+                obs[1] = 1.0 - deg_t
+                obs[5] = k_t
+                obs[6] = 1.0
         elif any(k in f_str for k in ("BEARING", "KNOCK", "SPALL", "VALVE_KNOCK")):
             k_t = 2.0
             active_regime = "BEARING_VALVE_KNOCK"
             deg_t = max(c03_deg, physical_deg, 0.90)
-            eta_t = float(deg_metrics.get("pressure_efficiency_ratio", 0.85))
-            tau_t = 1.0
+            obs[0] = deg_t
+            obs[1] = 1.0 - deg_t
+            obs[5] = k_t
+            obs[6] = 1.0
         elif any(k in f_str for k in ("OVERPRESSURE", "PRESSURE_SURGE", "SURGE")):
             k_t = 3.0
             active_regime = "CRITICAL_OVERPRESSURE"
             deg_t = max(c03_deg, physical_deg, 0.95)
-            eta_t = 0.20
-            tau_t = 1.0
+            obs[0] = deg_t
+            obs[1] = 1.0 - deg_t
+            obs[3] = 0.20
+            obs[5] = k_t
+            obs[6] = 1.0
         elif any(k in f_str for k in ("THERMAL", "OVERHEAT")):
             k_t = 4.0
             active_regime = "THERMAL_OVERHEAT"
             deg_t = max(c03_deg, physical_deg, 0.90)
-            eta_t = 0.65
-            tau_t = 1.0
-        elif "leak" in state_label.lower() or state_label == "ANOMALOUS_LEAK_REGIME":
-            k_t = 1.0
-            active_regime = "PNEUMATIC_AIR_LEAK"
-            deg_t = max(c03_deg, physical_deg, 0.55)
-            eta_t = 0.45
-            tau_t = 0.7
+            obs[0] = deg_t
+            obs[1] = 1.0 - deg_t
+            obs[3] = 0.65
+            obs[5] = k_t
+            obs[6] = 1.0
         else:
-            k_t = 0.0
-            active_regime = "NOMINAL"
-            deg_t = max(c03_deg, physical_deg if score > 0.3 else 0.05)
-            eta_t = float(deg_metrics.get("pressure_efficiency_ratio", 0.95))
-            drift_det = bool(beh_intel.get("drift_detected", False))
-            tau_t = 1.0 if drift_det else float(np.clip(float(beh_intel.get("persistence_counter", 0)) / 5.0, 0.0, 1.0))
+            k_t = float(op_state.get("cluster_id", 0))
+            active_regime = state_label if state_label not in ("NORMAL", "UNKNOWN") else "PRESSURIZING_LOADED"
+            deg_t = max(c03_deg, physical_deg if score > 0.3 else 0.005)
+            obs[0] = deg_t
+            obs[1] = 1.0 - deg_t
+            obs[5] = k_t
 
         if trip_relay:
             deg_t = max(deg_t, 0.95)
-            tau_t = 1.0
+            obs[0] = deg_t
+            obs[1] = 0.05
+            obs[6] = 1.0
 
         deg_t = float(np.clip(deg_t, 0.0, 1.0))
-        rul_t = float(np.clip(1.0 - deg_t, 0.0, 1.0))
-        eta_t = float(np.clip(eta_t, 0.0, 1.0))
-
-        c03_dev = float(beh_intel.get("deviation_index", 0.0))
-        if k_t > 0:
-            delta_t = float(np.clip(max(c03_dev, 2.0 + 3.0 * deg_t), 0.5, 5.5))
-            theta_t = float(np.clip(1.0 + 1.2 * deg_t, 0.0, 3.0))
-        else:
-            delta_t = float(np.clip(c03_dev if c03_dev > 0.0 else 0.5, 0.0, 5.5))
-            therm_factor = deg_metrics.get("thermal_dissipation_factor")
-            theta_t = float(np.clip(float(therm_factor) if therm_factor is not None else 1.0, 0.0, 3.0))
-
-        cycle_idx = int(meta.get("twin_cycle_index", current_packet.get("step", 1)))
-        t_maint = float(np.clip((cycle_idx % 500) / 500.0, 0.0, 1.0))
-
-        obs = np.array([deg_t, rul_t, delta_t, eta_t, theta_t, k_t, tau_t, t_maint], dtype=np.float32)
-        return obs, deg_t, active_regime
+        return obs, deg_t, active_regime, c03_payload
 
     # --------------------------------------------------------------------------
-    # BRANCH B: Mathematical Fallback (Only if C03 Payload is Missing Entirely)
+    # BRANCH B: Mathematical Fallback (If C03 is completely offline)
     # --------------------------------------------------------------------------
     if any(k in f_str for k in ("LEAK", "ANOMALOUS_LEAK")):
         k_t = 1.0
@@ -332,7 +378,7 @@ def extract_observation_vector(
     step_num = int(current_packet.get("step", 1))
     t_maint = float(np.clip((step_num % 100) / 100.0, 0.0, 1.0))
     obs = np.array([deg_t, rul_t, delta_t, eta_t, theta_t, k_t, tau_t, t_maint], dtype=np.float32)
-    return obs, deg_t, active_regime
+    return obs, deg_t, active_regime, None
 
 
 def compute_policy_decision(
@@ -401,13 +447,45 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
 
     # 1. Inference and Observation State
     agent = load_trained_dqn_agent()
-    obs, deg_t, active_regime = extract_observation_vector(current_packet, history_df)
+    obs, deg_t, active_regime, c03_payload = extract_observation_vector(current_packet, history_df)
 
     best_action, q_dict, confidence, inference_source = compute_policy_decision(agent, obs, deg_t, active_regime)
     act_meta = get_action_metadata(best_action, active_regime)
 
-    # Dynamic Active Regime Indicator
-    st.markdown(f"**Active Regime:** {active_regime}")
+    # Validate C03 contract schema if payload present
+    is_contract_valid = False
+    schema = load_c03_contract_schema()
+    if c03_payload and schema and jsonschema:
+        try:
+            jsonschema.validate(instance=c03_payload, schema=schema)
+            is_contract_valid = True
+        except Exception:
+            is_contract_valid = False
+
+    # Standardized Contract Integration Banner
+    if c03_payload is not None:
+        twin_id = c03_payload.get("twin_id", "TWIN-COMP-RECIP-01")
+        op_s = c03_payload.get("operating_state", {})
+        cluster_id = op_s.get("cluster_id", 0)
+
+        st.markdown(f"""
+        <div style="background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 10px; padding: 0.6rem 1rem; margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+                <span style="color: #38BDF8; font-weight: 700; font-size: 0.88rem;">🧬 Digital Twin Contract Ingestion:</span>
+                <span style="color: #F8FAFC; font-size: 0.82rem; font-family: monospace; margin-left: 0.4rem;">shared/interfaces/c03_to_c04_twin_state_contract.json</span>
+            </div>
+            <div style="display: flex; gap: 0.6rem; align-items: center;">
+                <span style="background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid #10B981; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;">
+                    {'✅ Schema Validated' if is_contract_valid else '⚡ Synchronized'}
+                </span>
+                <span style="color: #94A3B8; font-size: 0.78rem;">
+                    Twin ID: <b style="color: #E2E8F0;">{twin_id}</b> | Regime Cluster: <b style="color: #38BDF8;">k={cluster_id}</b>
+                </span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"**Active Regime:** {active_regime}")
 
     # Display active scenario or global fault injection indicator
     if hasattr(st, "session_state") and st.session_state.get("c03_active_scenario"):
@@ -415,9 +493,9 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
             f"**Digital Twin Synchronized:** Receiving active cyber-physical state from Module 03 scenario: "
             f"**{st.session_state.c03_active_scenario}**"
         )
-    elif active_regime not in ("NORMAL", "NOMINAL"):
+    elif active_regime not in ("NORMAL", "NOMINAL", "PRESSURIZING_LOADED"):
         st.warning(
-            f"**Live Perturbation Regime:** RL Prescriptive policy responding to global simulated fault: "
+            f"**Live Perturbation Regime:** RL Prescriptive policy responding to active operational fault: "
             f"**{active_regime}** (Degradation: **{deg_t:.2f} / 1.00** | Prescribed: **{act_meta['label']}**)"
         )
 
@@ -465,6 +543,55 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         </div>
     </div>
     """), unsafe_allow_html=True)
+
+    # Expandable Module 03 Digital Twin Payload & 8D MDP State Representation Inspector
+    if c03_payload is not None:
+        with st.expander("Inspect Module 03 Digital Twin Ingestion Payload & 8D MDP State Vector (s_t)", expanded=False):
+            op_st = c03_payload.get("operating_state", {})
+            beh_st = c03_payload.get("behavioral_intelligence", {})
+            deg_st = c03_payload.get("degradation_metrics", {})
+
+            col_p1, col_p2, col_p3 = st.columns(3)
+            with col_p1:
+                st.markdown("**1. Operating State ($k_t$)**")
+                st.caption(f"Cluster ID: `{op_st.get('cluster_id')}` | State: `{op_st.get('state_label')}`")
+                st.caption(f"Confidence: `{float(op_st.get('state_confidence', 1.0))*100:.1f}%`")
+            with col_p2:
+                st.markdown(r"**2. Behavioral Intelligence ($\delta_t, \tau_t$)**")
+                st.caption(f"Deviation Index: `{float(beh_st.get('deviation_index', 0.0)):.3f}`")
+                drift_txt = "DRIFT DECLARED" if beh_st.get("drift_detected") else "NOMINAL"
+                st.caption(f"Persistence: `{beh_st.get('persistence_counter', 0)}/5` | Status: `{drift_txt}`")
+            with col_p3:
+                st.markdown(r"**3. Degradation Metrics ($D_t, \eta_t, \theta_t$)**")
+                st.caption(f"Composite Wear: `{float(deg_st.get('composite_degradation_score', 0.0)):.4f}`")
+                st.caption(f"Pressure Eff: `{float(deg_st.get('pressure_efficiency_ratio', 1.0)):.3f}` | Thermal: `{float(deg_st.get('thermal_dissipation_factor', 1.0)):.3f}`")
+
+            st.markdown("---")
+            st.markdown(r"##### Canonical 8-Dimensional MDP Observation State $s_t \in \mathcal{S}$")
+            st.caption("Constructed directly from `c03_to_c04_twin_state_contract.json` into the Gymnasium observation space:")
+
+            dim_names = [
+                ("D_t (Degradation)", f"{obs[0]:.3f}", "#EF4444" if obs[0] > 0.4 else "#10B981"),
+                ("RUL_t (Norm RUL)", f"{obs[1]:.3f}", "#10B981" if obs[1] > 0.5 else "#F59E0B"),
+                ("δ_t (Deviation)", f"{obs[2]:.2f}", "#F59E0B" if obs[2] > 2.0 else "#38BDF8"),
+                ("η_t (Efficiency)", f"{obs[3]:.2f}", "#10B981" if obs[3] > 0.7 else "#EF4444"),
+                ("θ_t (Thermal)", f"{obs[4]:.2f}", "#EF4444" if obs[4] > 2.0 else "#38BDF8"),
+                ("k_t (Regime)", f"{int(obs[5])}", "#A855F7"),
+                ("τ_t (Persistence)", f"{obs[6]:.2f}", "#F59E0B" if obs[6] > 0.4 else "#94A3B8"),
+                ("t_maint (Cycle)", f"{obs[7]:.2f}", "#38BDF8"),
+            ]
+            dim_cols = st.columns(8)
+            for col_idx, (d_name, d_val, d_color) in enumerate(dim_names):
+                with dim_cols[col_idx]:
+                    st.markdown(f"""
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.4rem 0.5rem; text-align: center;">
+                        <span style="font-size: 0.68rem; color: #94A3B8; font-weight: 600;">{d_name}</span><br>
+                        <b style="font-size: 0.95rem; color: {d_color};">{d_val}</b>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            with st.expander("View Standardized Contract JSON (Raw Ingestion Payload)", expanded=False):
+                st.json(c03_payload)
 
     # ==========================================================================
     # 2. Q-VALUE DISTRIBUTION & LIVE DECISION CONFIDENCE
@@ -552,7 +679,7 @@ def render_c04_view(current_packet: Optional[Dict[str, Any]] = None, history_df:
         elif not history_df.empty:
             for idx, row in history_df.tail(8).iloc[::-1].iterrows():
                 row_dict = row.to_dict()
-                row_obs, row_deg, row_regime = extract_observation_vector(row_dict, history_df)
+                row_obs, row_deg, row_regime, _ = extract_observation_vector(row_dict, history_df)
                 r_act, _, r_conf, _ = compute_policy_decision(agent, row_obs, row_deg, row_regime)
                 r_meta = get_action_metadata(r_act, row_regime)
 

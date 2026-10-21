@@ -151,6 +151,13 @@ with st.sidebar:
             st.session_state["active_fault_regime"] = "NOMINAL"
             st.session_state["c03_active_payload"] = None
             st.session_state["c03_active_scenario"] = None
+            if "c03_controller" in st.session_state:
+                ctrl = st.session_state.c03_controller
+                ctrl.engine.buffer.clear()
+                ctrl.engine.tracker.persistence_counter = 0
+                ctrl.engine.tracker.drift_detected = False
+                ctrl.engine.tracker._recent_deviations.clear()
+                ctrl.engine.tracker._composite_score = 0.0
             st.toast("Simulator: Interlock cleared to NOMINAL")
         st.rerun()
 
@@ -198,6 +205,13 @@ with st.sidebar:
             st.session_state["active_fault_regime"] = "NOMINAL"
             st.session_state["c03_active_payload"] = None
             st.session_state["c03_active_scenario"] = None
+            if "c03_controller" in st.session_state:
+                ctrl = st.session_state.c03_controller
+                ctrl.engine.buffer.clear()
+                ctrl.engine.tracker.persistence_counter = 0
+                ctrl.engine.tracker.drift_detected = False
+                ctrl.engine.tracker._recent_deviations.clear()
+                ctrl.engine.tracker._composite_score = 0.0
             st.toast("Operating regime set to NOMINAL")
             st.rerun()
 

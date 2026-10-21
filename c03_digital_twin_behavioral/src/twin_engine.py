@@ -228,8 +228,17 @@ class IndustrialDigitalTwinEngine:
         composite_score = float(m_dict["composite_degradation_score"])
         is_leak_state = (assignment.state_label == OperatingStateLabel.ANOMALOUS_LEAK_REGIME.value)
         valves_leaking = bool(subsystems_dict.get("suction_discharge_valves", {}).get("valve_leakage_detected", False))
+        is_bearing_impacting = (subsystems_dict.get("main_bearing_assembly", {}).get("status") == "IMPACTING")
+        is_thermal_critical = (snapshot.temperature_celsius > 75.0 or subsystems_dict.get("electric_motor", {}).get("status") in ("ELEVATED_TEMP", "CURRENT_OVERLOAD"))
+        is_overpressure_critical = (snapshot.pressure_psi >= 115.0 and snapshot.delta_pressure_dt > 1.0)
 
-        if b_dict["deviation_classification"] == DeviationClassification.CRITICAL_DRIFT.value or (is_leak_state and b_dict["drift_detected"]):
+        # Critical physical breakdown or extreme operating limit trip
+        if is_bearing_impacting or is_thermal_critical or is_overpressure_critical:
+            twin_status = "CRITICAL"
+        # Air leak is an operational pneumatic degradation (matches C02 Degradation Detected)
+        elif is_leak_state and composite_score <= 0.85:
+            twin_status = "DEGRADED"
+        elif b_dict["deviation_classification"] == DeviationClassification.CRITICAL_DRIFT.value:
             twin_status = "CRITICAL"
         elif b_dict["drift_detected"] or is_leak_state or valves_leaking:
             twin_status = "DEGRADED"
@@ -378,12 +387,12 @@ class IndustrialDigitalTwinEngine:
         if kurt > 5.5 and vib_x > 4.5:
             bearing_status = "IMPACTING"
             bearing_health = 0.25
-        elif vib_x > 4.0:
+        elif kurt > 4.5 or vib_x > 6.5:
             bearing_status = "WEAR_DETECTED"
             bearing_health = 0.50
         else:
             bearing_status = "NOMINAL"
-            bearing_health = round(max(0.0, 1.0 - (vib_x / 8.0)), 3)
+            bearing_health = round(float(np.clip(1.0 - 0.2 * comp_score, 0.85, 0.99)), 3)
 
         return {
             "electric_motor": {
